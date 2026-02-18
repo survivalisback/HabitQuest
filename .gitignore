@@ -36,3 +36,6 @@ replay_pid*
 
 # Temporary files
 notes.md
+
+# DrawIO temp files
+*.drawio.bkp
