@@ -39,3 +39,7 @@ notes.md
 
 # DrawIO temp files
 *.drawio.bkp
+
+# Pycache
+__pycache__/
+*.py[cod]
