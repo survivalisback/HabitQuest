@@ -4,7 +4,7 @@ class Habit:
     id: int
     name: str
     description: str
-    frequency: str
+    frequency: str # e.g. "daily", "weekly", "monthly"
     difficulty: str
     xp_reward: int
     streak: int

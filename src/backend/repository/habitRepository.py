@@ -1,4 +1,5 @@
 from backend.repository.db_connector import DBConnector
+from models.habit import Habit
 
 class HabitRepository:
 
@@ -9,14 +10,22 @@ class HabitRepository:
         self.connection = DBConnector()
         self.habits = []
 
-    def create_habit(self, habit):
-        pass
+    def create_habit(self, habit: Habit):
+        try:
+            self.connection.add_habit(habit)
+            # TODO: Check if habit is a duplicate
+        except Exception as e:
+            print(f"Error adding habit to database: {e}")
 
     def get_habits(self):
+        self.update_habits()
+        return self.habits
+
+    def update_habit(self, habit_id: int, habit: Habit):
         pass
 
-    def update_habit(self, habit_id, habit):
+    def delete_habit(self, habit_id: int):
         pass
 
-    def delete_habit(self, habit_id):
-        pass
+    def update_habits(self):
+        self.habits = self.connection.get_habits()
