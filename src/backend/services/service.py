@@ -4,10 +4,8 @@ from datetime import datetime
 
 # Business/Gamification Logic
 class Service:
-    habit_repository: HabitRepository
-
-    def __init__(self):
-        self.habit_repository = HabitRepository()
+    def __init__(self, repository: HabitRepository):
+        self.habit_repository = repository
 
     def create_habit(self, name: str, description: str, frequency: str, difficulty: int):
         habit = Habit(name, description, frequency, difficulty)
