@@ -1,12 +1,12 @@
-from dbconnector import DBConnector
+from backend.repository.db_connector import DBConnector
 
 class HabitRepository:
 
-    dbConnector: DBConnector
+    connection: DBConnector
     habits: list
 
     def __init__(self):
-        self.dbConnector = DBConnector()
+        self.connection = DBConnector()
         self.habits = []
 
     def create_habit(self, habit):

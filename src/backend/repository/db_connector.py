@@ -6,22 +6,22 @@ class DBConnector:
         self.connection = sqlite3.connect("./db/habitquest.db")
         self.cursor = self.connection.cursor()
 
-    def getHabits(self) -> list:
+    def get_habits(self) -> list:
         self.cursor.execute("SELECT * FROM Habit")
         return self.cursor.fetchall()
 
-    def addHabit(self, habit: Habit) -> None:
+    def add_habit(self, habit: Habit) -> None:
         self.cursor.execute("""
         INSERT INTO Habit (name, description, frequency, difficulty, xp_reward)
         VALUES (?, ?, ?, ?, ?)
         """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward))
         self.connection.commit()
 
-    def removeHabit(self, habit: Habit) -> None:
+    def remove_habit(self, habit: Habit) -> None:
         self.cursor.execute("DELETE FROM Habit WHERE id = ?", (habit.id,))
         self.connection.commit()
 
-    def editHabit(self, habit: Habit) -> None:
+    def edit_habit(self, habit: Habit) -> None:
         self.cursor.execute("""
         UPDATE Habit
         SET name = ?, description = ?, frequency = ?, difficulty = ?, xp_reward = ?
@@ -29,7 +29,7 @@ class DBConnector:
         """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward, habit.id))
         self.connection.commit()
 
-    def createBaseFile(self) -> None:
+    def create_base_file(self) -> None:
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS "Habit" (
 	    "id" INTEGER NOT NULL UNIQUE,
