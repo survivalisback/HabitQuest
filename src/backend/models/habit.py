@@ -18,3 +18,6 @@ class Habit:
         self.description = description
         self.frequency = frequency
         self.difficulty = difficulty
+    
+    def check_duplicate(self, other_habit: 'Habit') -> bool:
+        return self.name == other_habit.name and self.description == other_habit.description and self.frequency == other_habit.frequency

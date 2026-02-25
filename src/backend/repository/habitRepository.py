@@ -11,9 +11,13 @@ class HabitRepository:
         self.habits = []
 
     def create_habit(self, habit: Habit):
+        self.update_habits()
+        if any(existing_habit.check_duplicate(habit) for existing_habit in self.habits):
+            print("Duplicate habit detected. Habit not added.")
+            return
+
         try:
             self.connection.add_habit(habit)
-            # TODO: Check if habit is a duplicate
         except Exception as e:
             print(f"Error adding habit to database: {e}")
 
