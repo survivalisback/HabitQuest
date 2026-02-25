@@ -1,9 +1,10 @@
 import sqlite3
 from models.habit import Habit
+from config import settings
 
 class DBConnector:
     def __init__(self):
-        self.connection = sqlite3.connect("./db/habitquest.db")
+        self.connection = sqlite3.connect(settings.database_url)
         self.cursor = self.connection.cursor()
 
     def get_habits(self) -> list:
