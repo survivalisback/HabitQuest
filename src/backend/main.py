@@ -1,5 +1,5 @@
 import fastapi
-from api.habitApi import habitRouter
+from backend.api.habit_api import habitRouter
 from services.service import Service
 
 # API Configuration
