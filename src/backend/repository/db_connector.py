@@ -1,6 +1,9 @@
-import sqlite3
+import sqlite3, logging
 from models.habit import Habit
 from config import settings
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class DBConnector:
     def __init__(self):

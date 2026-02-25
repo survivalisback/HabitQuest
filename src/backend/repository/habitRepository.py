@@ -1,5 +1,12 @@
+import logging
+
 from backend.repository.db_connector import DBConnector
 from models.habit import Habit
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 class HabitRepository:
     def __init__(self, db: DBConnector):
@@ -9,12 +16,15 @@ class HabitRepository:
     def create_habit(self, habit: Habit):
         self.update_habits()
         if any(existing_habit.check_duplicate(habit) for existing_habit in self.habits):
-            print("Duplicate habit detected. Habit not added.")
+            logger.warning("Duplicate habit detected. Habit not added.")
+            return
+        if not habit.is_valid():
+            logger.warning("Invalid habit data. Habit not added.")
             return
         try:
             self.connection.add_habit(habit)
         except Exception as e:
-            print(f"Error adding habit to database: {e}")
+            logger.error(f"Error adding habit to database: {e}")
 
     def update_habit(self, habit_id: int, habit: Habit):
         self.connection.update_habit(habit_id, habit)

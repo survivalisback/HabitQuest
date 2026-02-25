@@ -1,11 +1,12 @@
 from datetime import datetime
+from typing import Annotated
 
 class Habit:
-    id: int
+    id: Annotated[int, "Auto-incremented primary key - Is created by the database and should not be edited manually"]
     name: str
     description: str
-    frequency: str # e.g. "daily", "weekly", "monthly"
-    difficulty: str
+    frequency: Annotated[str, "e.g. 'daily', 'weekly', 'monthly'"]
+    difficulty: Annotated[str, "1-5"]
     xp_reward: int
     streak: int
     longest_streak: int

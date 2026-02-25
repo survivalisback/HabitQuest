@@ -25,6 +25,6 @@ class Service:
     def toggle_task_completion(self, habit_id: int):
         self.habit_repository.toggle_task_completion(habit_id)
 
-    # TODO: Calculate xp reward based on llm
+    # TODO: Calculate xp reward based on LLM Response
     def calculate_xp_reward(self, habit: Habit) -> int:
         return habit.difficulty * 10
