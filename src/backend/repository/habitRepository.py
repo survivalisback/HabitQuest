@@ -5,8 +5,9 @@ class HabitRepository:
     dbConnector: DBConnector
     habits: list
 
-    def __init__(self, db):
-        self.dbConnector = db
+    def __init__(self):
+        self.dbConnector = DBConnector()
+        self.habits = []
 
     def create_habit(self, habit):
         pass
