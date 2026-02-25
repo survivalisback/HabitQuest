@@ -20,15 +20,14 @@ class HabitRepository:
         except Exception as e:
             print(f"Error adding habit to database: {e}")
 
-    def get_habits(self):
-        self.update_habits()
-        return self.habits
-
     def update_habit(self, habit_id: int, habit: Habit):
         self.connection.update_habit(habit_id, habit)
 
     def delete_habit(self, habit_id: int):
-        pass
+        self.connection.delete_habit(habit_id)
+
+    def toggle_task_completion(self, habit_id: int):
+        self.connection.toggle_task_completion(habit_id)
 
     def update_habits(self):
         self.habits = self.connection.get_habits()

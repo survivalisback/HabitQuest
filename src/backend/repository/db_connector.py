@@ -17,7 +17,7 @@ class DBConnector:
         """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward))
         self.connection.commit()
 
-    def remove_habit(self, habit: Habit) -> None:
+    def delete_habit(self, habit: Habit) -> None:
         self.cursor.execute("DELETE FROM Habit WHERE id = ?", (habit.id,))
         self.connection.commit()
 
@@ -28,6 +28,10 @@ class DBConnector:
         WHERE id = ?
         """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward, habit_id))
         self.connection.commit()
+
+    # TODO: Add toggle logic. Keep in mind, that a completed habit gets its own entry in the HabitCompleted table. Therefore, if the task is toggled twice, the entry in the HabitCompleted table should be deleted.
+    def toggle_task_completion(self, habit_id: int) -> None:
+        pass
 
     def create_base_file(self) -> None:
         self.cursor.execute("""
