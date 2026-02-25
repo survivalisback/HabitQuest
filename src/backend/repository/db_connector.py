@@ -21,12 +21,12 @@ class DBConnector:
         self.cursor.execute("DELETE FROM Habit WHERE id = ?", (habit.id,))
         self.connection.commit()
 
-    def edit_habit(self, habit: Habit) -> None:
+    def update_habit(self, habit_id: int, habit: Habit) -> None:
         self.cursor.execute("""
         UPDATE Habit
         SET name = ?, description = ?, frequency = ?, difficulty = ?, xp_reward = ?
         WHERE id = ?
-        """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward, habit.id))
+        """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward, habit_id))
         self.connection.commit()
 
     def create_base_file(self) -> None:
