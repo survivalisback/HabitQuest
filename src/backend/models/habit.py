@@ -9,7 +9,7 @@ class Habit:
     xp_reward: int
     streak: int
     longest_streak: int
-    last_completed: str
+    last_completed: datetime
     created_at: datetime
     updated_at: datetime
 
