@@ -27,3 +27,20 @@ Daran arbeite ich als nächstes:
 - Weitere Backend-Entwicklung
     - Erstellen von API Endpunkten zum Frontend
 - Entwicklung eines Datenbank-entwurfs
+
+## Week 2 - 23.02.2026 - 27.02.2026
+
+Das habe ich geschafft:
+- Erstellen einer grundlegenden Backend-Struktur
+    - Grundlegende API Funktionalität
+    - Grundlegende Funktionalitäten für hauptfunktionen (bspw. Habit erstellung, bearbeitung, löschung, etc.)
+    - Datenbankanbindung erstellt
+- Erstellung eines groben Datenbankentwurfs
+- Erstellung der Datenbank basierend auf dem Datenbankentwurf
+- Problem: Python imports funktionieren nicht
+
+Daran arbeite ich als nächstes:
+- Fehler bei Python imports beheben
+- Manuelle tests ob Frontend zu Backend Anbindung funktioniert
+- Service/Business logik implementieren
+    - bspw. XP-Reward, Streaks, etc.
