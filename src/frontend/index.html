@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HabitQuest</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>HabitQuest</h1>
+    </header>
+
+    <main id="main-layout">
+
+      <section id="habit-panel" class="panel">
+
+        <div id="habit-input-area">
+          <input
+            id="habit-name-input"
+            type="text"
+            placeholder="Enter a habit name…"
+            autocomplete="off"
+          />
+          <div id="input-actions">
+            <button id="btn-track-now">Track Now</button>
+            <button id="btn-add-recurring">Add as Recurring</button>
+          </div>
+
+          <div id="frequency-picker" class="hidden">
+            <span class="freq-label">Choose frequency:</span>
+            <div class="freq-buttons">
+              <button class="freq-btn" data-freq="daily">Daily</button>
+              <button class="freq-btn" data-freq="weekly">Weekly</button>
+              <button class="freq-btn" data-freq="monthly">Monthly</button>
+            </div>
+            <button id="btn-cancel-freq">Cancel</button>
+          </div>
+        </div>
+
+        <div id="feedback-banner" class="hidden" role="alert"></div>
+
+        <div id="habit-lists">
+
+          <div class="habit-section" id="section-daily">
+            <h2>Daily</h2>
+            <ul id="list-daily"></ul>
+            <p class="empty-state" id="empty-daily">No daily habits yet.</p>
+          </div>
+
+          <div class="habit-section" id="section-weekly">
+            <h2>Weekly</h2>
+            <ul id="list-weekly"></ul>
+            <p class="empty-state" id="empty-weekly">No weekly habits yet.</p>
+          </div>
+
+          <div class="habit-section" id="section-monthly">
+            <h2>Monthly</h2>
+            <ul id="list-monthly"></ul>
+            <p class="empty-state" id="empty-monthly">No monthly habits yet.</p>
+          </div>
+
+        </div>
+      </section>
+
+      <aside id="gamification-panel" class="panel">
+        <div id="player-info">
+          <div id="level-display">
+            <span class="level-label">Level</span>
+            <span id="level-number">1</span>
+          </div>
+          <div id="player-name">Adventurer</div>
+        </div>
+
+        <div id="xp-section">
+          <div id="xp-label-row">
+            <span>XP</span>
+            <span id="xp-text">0 / 100</span>
+          </div>
+          <div id="xp-bar-container">
+            <div id="xp-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div id="streak-section">
+          <span class="stat-icon">🔥</span>
+          <div>
+            <div class="stat-value" id="streak-value">0</div>
+            <div class="stat-label">Day Streak</div>
+          </div>
+        </div>
+
+        <div id="achievements-section">
+          <h3>Achievements</h3>
+          <div id="achievement-grid">
+            <div class="achievement-badge locked" title="First Step — Complete your first habit">
+              <span class="badge-icon">⭐</span>
+              <span class="badge-name">First Step</span>
+            </div>
+            <div class="achievement-badge locked" title="Week Warrior — 7-day streak">
+              <span class="badge-icon">🛡️</span>
+              <span class="badge-name">Week Warrior</span>
+            </div>
+            <div class="achievement-badge locked" title="Habit Master — 10 habits tracked">
+              <span class="badge-icon">👑</span>
+              <span class="badge-name">Habit Master</span>
+            </div>
+            <div class="achievement-badge locked" title="Consistent — 30-day streak">
+              <span class="badge-icon">💎</span>
+              <span class="badge-name">Consistent</span>
+            </div>
+            <div class="achievement-badge locked" title="Explorer — Try all frequencies">
+              <span class="badge-icon">🗺️</span>
+              <span class="badge-name">Explorer</span>
+            </div>
+            <div class="achievement-badge locked" title="Legend — 100 completions">
+              <span class="badge-icon">🏆</span>
+              <span class="badge-name">Legend</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="coming-soon-label">Full gamification coming soon</div>
+      </aside>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
