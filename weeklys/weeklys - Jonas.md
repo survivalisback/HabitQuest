@@ -27,3 +27,17 @@ Daran arbeite ich als nächstes:
 - Weitere Frontend-Entwicklung
 - Weiterarbeiten an den UML Diagrammen
 - Entwicklung eines Datenbank-entwurfs
+
+## Week 2 - 23.02.2026 - 27.02.2026
+Das habe ich geschafft:
+- HTML-Grundstruktur des Frontends erstellt (`index.html`)
+    - Header mit App-Titel
+    - Habit-Panel mit Eingabefeld und Buttons zum Tracken (einmalig & wiederkehrend)
+    - Frequency-Picker für tägliche, wöchentliche und monatliche Habits
+    - Auflistung der Habits geordnet nach Häufigkeit (Daily / Weekly / Monthly)
+    - Gamification-Panel mit Level-Anzeige, XP-Balken, Streak-Anzeige und Achievement-Grid (6 Badges)
+
+Daran arbeite ich als nächstes:
+- Styling des Frontends (CSS)
+- Interaktionslogik des Frontends (JavaScript)
+- Weiterarbeiten an den UML Diagrammen (aufgeschoben)
