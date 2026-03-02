@@ -44,3 +44,6 @@ notes.md
 __pycache__/
 *.py[cod]
 .env
+
+# VSCode
+.vscode/
