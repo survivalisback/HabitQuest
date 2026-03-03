@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 class DBConnector:
     def __init__(self):
-        self.connection = sqlite3.connect(settings.database_url)
+        settings.database_path.parent.mkdir(parents=True, exist_ok=True)
+        self.connection = sqlite3.connect(str(settings.database_path))
         self.cursor = self.connection.cursor()
 
     def get_habits(self) -> list:
