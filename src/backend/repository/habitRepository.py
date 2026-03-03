@@ -1,6 +1,6 @@
 import logging
 
-from backend.repository.db_connector import DBConnector
+from repository.db_connector import DBConnector
 from models.habit import Habit
 
 

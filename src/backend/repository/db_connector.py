@@ -1,5 +1,5 @@
 import sqlite3, logging
-from models.habit import Habit
+from models import habit
 from config import settings
 
 logging.basicConfig(level=logging.INFO)
@@ -14,18 +14,18 @@ class DBConnector:
         self.cursor.execute("SELECT * FROM Habit")
         return self.cursor.fetchall()
 
-    def add_habit(self, habit: Habit) -> None:
+    def add_habit(self, habit: habit.Habit) -> None:
         self.cursor.execute("""
         INSERT INTO Habit (name, description, frequency, difficulty, xp_reward)
         VALUES (?, ?, ?, ?, ?)
         """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward))
         self.connection.commit()
 
-    def delete_habit(self, habit: Habit) -> None:
+    def delete_habit(self, habit: habit.Habit) -> None:
         self.cursor.execute("DELETE FROM Habit WHERE id = ?", (habit.id,))
         self.connection.commit()
 
-    def update_habit(self, habit_id: int, habit: Habit) -> None:
+    def update_habit(self, habit_id: int, habit: habit.Habit) -> None:
         self.cursor.execute("""
         UPDATE Habit
         SET name = ?, description = ?, frequency = ?, difficulty = ?, xp_reward = ?
@@ -63,3 +63,6 @@ class DBConnector:
 
     def close(self) -> None:
         self.connection.close()
+
+db = DBConnector()
+print(db.get_habits())

@@ -1,5 +1,5 @@
 import fastapi
-from ..main import service
+from dependencies import service
 
 habitRouter = fastapi.APIRouter()
 
