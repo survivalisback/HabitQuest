@@ -44,3 +44,10 @@ class HabitRepository:
             if existing_habit.check_duplicate(habit):
                 return existing_habit.id
         return -1
+    
+    def get_habit_by_id(self, habit_id: int) -> Habit:
+        self.update_habits()
+        for existing_habit in self.habits:
+            if existing_habit.id == habit_id:
+                return existing_habit
+        return None

@@ -15,7 +15,10 @@ class Service:
 
     def edit_habit(self, habit_id: int, name: str, description: str, frequency: str, difficulty: int):
         habit = Habit(name, description, frequency, difficulty)
-        habit.xp_reward = self.calculate_xp_reward(habit)
+
+        # TODO: Update xp_reward to use xp_provider
+        # habit.xp_reward = self.calculate_xp_reward(habit)
+
         habit.updated_at = datetime.now()
         self.habit_repository.update_habit(habit_id, habit)
 
@@ -24,7 +27,3 @@ class Service:
     
     def toggle_task_completion(self, habit_id: int):
         self.habit_repository.toggle_task_completion(habit_id)
-
-    # TODO: Calculate xp reward based on LLM Response
-    def calculate_xp_reward(self, habit: Habit) -> int:
-        return habit.difficulty * 10
