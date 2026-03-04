@@ -1,10 +1,17 @@
+from math import ceil
 
 class Level:
-    def __init__(self, level: int = 0, experience_points: int = 0):
-        self.level = level
-        self.experience_points = experience_points
+    def __init__(self):
+        self.level = 0
+        self.xp = 0
+        self.current_level = 0
+        self.needed_xp = 0
 
-    def calculate_level(self) -> int:
-        # Simple leveling system: every 100 XP increases the level by 1
-        self.level = self.experience_points // 100
-        return self.level
+    def add_xp(self, xp: int):
+        self.xp += xp
+        self.update_level()
+    
+    def update_level(self):
+        if self.xp >= self.needed_xp:
+            self.level += 1
+            self.needed_xp = ceil((self.needed_xp*1.25)/100)*100 # Round to next 100

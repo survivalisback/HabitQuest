@@ -5,7 +5,7 @@ class Habit:
     id: Annotated[int, "Auto-incremented primary key - Is created by the database and should not be edited manually"]
     name: str
     description: str
-    frequency: Annotated[str, "e.g. 'daily', 'weekly', 'monthly'"]
+    frequency: Annotated[str, "e.g. 'once', 'daily', 'weekly', 'monthly'"]
     difficulty: Annotated[str, "1-5"]
     xp_reward: int
     streak: int
