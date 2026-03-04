@@ -1,5 +1,5 @@
 from models.habit import Habit
-from level_policy import Level
+from models.level import Level
 
 class StaticXpProvider:
     def __init__(self, level: Level):
