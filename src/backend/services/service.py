@@ -17,10 +17,7 @@ class Service:
 
     def edit_habit(self, habit_id: int, name: str, description: str, frequency: str, difficulty: int):
         habit = Habit(name, description, frequency, difficulty)
-
-        # TODO: Update xp_reward to use xp_provider
-        # habit.xp_reward = self.calculate_xp_reward(habit)
-
+        habit.xp_reward = self.xp_provider.calculate_xp(habit)
         habit.updated_at = datetime.now()
         self.habit_repository.update_habit(habit_id, habit)
 
