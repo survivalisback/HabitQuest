@@ -1,0 +1,556 @@
+/* ─── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-body:       #0f0f13;
+  --bg-panel:      #1a1a24;
+  --border:        #2a2a3e;
+  --accent-left:   #4f46e5;
+  --accent-right:  #f59e0b;
+  --text-primary:  #f1f5f9;
+  --text-secondary:#94a3b8;
+  --success:       #22c55e;
+  --error:         #ef4444;
+  --accent-daily:  #4f46e5;
+  --accent-weekly: #7c3aed;
+  --accent-monthly:#0ea5e9;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ─── App Shell ─────────────────────────────────────────────────────────────── */
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent-left), var(--accent-right));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Main Grid ─────────────────────────────────────────────────────────────── */
+#main-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  #main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Panel Base ────────────────────────────────────────────────────────────── */
+.panel {
+  background: var(--bg-panel);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ─── Habit Input Area ──────────────────────────────────────────────────────── */
+#habit-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#habit-name-input {
+  width: 100%;
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#habit-name-input::placeholder {
+  color: var(--text-secondary);
+}
+
+#habit-name-input:focus {
+  border-color: var(--accent-left);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+}
+
+#input-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#btn-track-now,
+#btn-add-recurring {
+  flex: 1;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  border: none;
+}
+
+#btn-track-now {
+  background: var(--accent-left);
+  color: #fff;
+}
+
+#btn-track-now:hover {
+  background: #4338ca;
+}
+
+#btn-add-recurring {
+  background: transparent;
+  color: var(--accent-left);
+  border: 1.5px solid var(--accent-left);
+}
+
+#btn-add-recurring:hover {
+  background: rgba(79, 70, 229, 0.1);
+}
+
+#btn-track-now:active,
+#btn-add-recurring:active {
+  transform: scale(0.97);
+}
+
+/* ─── Frequency Picker ──────────────────────────────────────────────────────── */
+#frequency-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  background: rgba(79, 70, 229, 0.07);
+  border: 1px solid var(--accent-left);
+  border-radius: 8px;
+  padding: 0.875rem;
+}
+
+.freq-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.freq-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.freq-btn {
+  padding: 0.375rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent-left);
+  background: transparent;
+  color: var(--accent-left);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.freq-btn:hover {
+  background: rgba(79, 70, 229, 0.15);
+}
+
+.freq-btn.active {
+  background: var(--accent-left);
+  color: #fff;
+  border-color: var(--accent-left);
+}
+
+#btn-cancel-freq {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0.125rem 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+#btn-cancel-freq:hover {
+  color: var(--text-primary);
+}
+
+/* ─── Feedback Banner ───────────────────────────────────────────────────────── */
+#feedback-banner {
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-left: 4px solid transparent;
+  transition: opacity 0.3s;
+}
+
+#feedback-banner.success {
+  background: rgba(34, 197, 94, 0.1);
+  border-left-color: var(--success);
+  color: #86efac;
+}
+
+#feedback-banner.error {
+  background: rgba(239, 68, 68, 0.1);
+  border-left-color: var(--error);
+  color: #fca5a5;
+}
+
+/* ─── Habit Lists ───────────────────────────────────────────────────────────── */
+#habit-lists {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.habit-section {
+  padding-left: 1rem;
+}
+
+#section-daily  { border-left: 3px solid var(--accent-daily); }
+#section-weekly { border-left: 3px solid var(--accent-weekly); }
+#section-monthly{ border-left: 3px solid var(--accent-monthly); }
+
+.habit-section h2 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 0.625rem;
+}
+
+#section-daily   h2 { color: var(--accent-daily); }
+#section-weekly  h2 { color: var(--accent-weekly); }
+#section-monthly h2 { color: var(--accent-monthly); }
+
+.habit-section ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.empty-state {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 0.25rem 0;
+}
+
+/* ─── Habit Item ────────────────────────────────────────────────────────────── */
+.habit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: var(--bg-body);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.habit-item:hover {
+  border-color: var(--border);
+}
+
+/* Custom checkbox */
+.habit-item label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.habit-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-panel);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.habit-item input[type="checkbox"]:hover {
+  border-color: var(--accent-left);
+}
+
+.habit-item input[type="checkbox"]:checked {
+  background: var(--accent-left);
+  border-color: var(--accent-left);
+}
+
+.habit-item input[type="checkbox"]:checked::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.habit-name {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.freq-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.freq-badge.daily   { background: rgba(79, 70, 229, 0.15); color: var(--accent-daily); }
+.freq-badge.weekly  { background: rgba(124, 58, 237, 0.15); color: var(--accent-weekly); }
+.freq-badge.monthly { background: rgba(14, 165, 233, 0.15); color: var(--accent-monthly); }
+
+.btn-delete-habit {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.btn-delete-habit:hover {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Completing Animation ──────────────────────────────────────────────────── */
+@keyframes fadeSlideOut {
+  0%   { opacity: 1;   transform: translateX(0);      max-height: 60px; margin-bottom: 0.375rem; }
+  60%  { opacity: 0;   transform: translateX(40px);   max-height: 60px; }
+  100% { opacity: 0;   transform: translateX(40px);   max-height: 0;    margin-bottom: 0; padding: 0; }
+}
+
+.habit-item.completing {
+  animation: fadeSlideOut 0.5s ease forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ─── Hidden Utility ────────────────────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ─── Gamification Panel ────────────────────────────────────────────────────── */
+#gamification-panel {
+  position: relative;
+}
+
+#player-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#level-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-right), #ea580c);
+  flex-shrink: 0;
+}
+
+.level-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.7);
+}
+
+#level-number {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+#player-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* XP Bar */
+#xp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+#xp-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+#xp-bar-container {
+  height: 12px;
+  background: var(--bg-body);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+#xp-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-right), #ea580c);
+  transition: width 0.6s ease;
+  min-width: 0;
+}
+
+/* Streak */
+#streak-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-body);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-right);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.125rem;
+}
+
+/* Achievements */
+#achievements-section h3 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+#achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.achievement-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  background: var(--bg-body);
+  border-radius: 8px;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--border);
+  cursor: default;
+  transition: transform 0.15s;
+}
+
+.achievement-badge:not(.locked):hover {
+  transform: translateY(-2px);
+}
+
+.achievement-badge.locked {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.badge-icon {
+  font-size: 1.5rem;
+}
+
+.badge-name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Coming soon */
+#coming-soon-label {
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
