@@ -41,3 +41,24 @@ Daran arbeite ich als nächstes:
 - Styling des Frontends (CSS)
 - Interaktionslogik des Frontends (JavaScript)
 - Weiterarbeiten an den UML Diagrammen (aufgeschoben)
+
+## Week 3 - 02.03.2026 - 06.03.2026
+
+Das habe ich geschafft:
+- CSS-Styling des Frontends (`style.css`)
+    - Design-System mit CSS Custom Properties (Farben, Akzentfarben)
+    - Dunkles Theme mit responsivem Grid-Layout (2 Spalten, 1 Spalte bei < 768px)
+    - Styling von Habit-Panel, Frequency Picker, Habit-Listeneinträgen mit Frequency-Badges
+    - Custom Checkbox rein in CSS mit Checkmark
+    - Gamification-Panel: Level-Anzeige, animierter XP-Balken, Streak-Sektion, Achievement-Grid
+    - Feedback-Banner und `fadeSlideOut`-Animation für abgeschlossene Habits
+- JavaScript-Logik des Frontends (`app.js`)
+    - State-Management und Persistierung via localStorage
+    - Perioden-Logik für tägliche, wöchentliche und monatliche Habits
+    - Asynchrone API-Anbindung an das Backend via `fetch`
+    - Dynamisches DOM-Rendering der Habit-Listen
+    - Event-Handler für alle Interaktionen: Habit hinzufügen, abhaken, löschen, Frequency auswählen
+
+Daran arbeite ich als nächstes:
+- Gamification-Logik im Frontend (XP vergeben, Level-Ups)
+- Vollständige Backend-Anbindung

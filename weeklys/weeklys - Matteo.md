@@ -44,3 +44,17 @@ Daran arbeite ich als nächstes:
 - Manuelle tests ob Frontend zu Backend Anbindung funktioniert
 - Service/Business logik implementieren
     - bspw. XP-Reward, Streaks, etc.
+
+## Week 3 - 02.03.2026 - 06.03.2026
+ 
+Das habe ich geschafft:
+- Python imports gefixed
+- Service/Business logik implementiert
+    - XP-Rewards
+ 
+Daran arbeite ich als nächstes:
+- Manuelle tests ob Fronted zu Backend Anbindung funktioniert
+- Service/Business logik implementieren
+- Datenbank erweitern/anpassen
+    - Für toggle funktion und ggf. Rewards
+- ggf. KI Anbindung
