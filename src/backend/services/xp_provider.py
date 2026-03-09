@@ -16,9 +16,19 @@ class StaticXpProvider:
         
         return int(base_xp * frequency_multiplier)
 
+    def _resolve_habit_xp(self, habit: Habit) -> int:
+        stored_xp = getattr(habit, "xp_reward", None)
+        if isinstance(stored_xp, (int, float)):
+            return int(stored_xp)
+        return self.calculate_xp(habit)
+
     def grant_xp(self, habit: Habit):
-        xp = self.calculate_xp(habit)
+        xp = self._resolve_habit_xp(habit)
         self.level.add_xp(xp)
+
+    def revoke_xp(self, habit: Habit):
+        xp = self._resolve_habit_xp(habit)
+        self.level.remove_xp(xp)
 
 class DynamicXpProvider:
     def __init__(self, level: Level):
@@ -28,7 +38,17 @@ class DynamicXpProvider:
         # Placeholder for dynamic XP calculation logic
         # This could involve calling an AI service to evaluate the habit's attributes and history
         return 0  # Return a default value for now
+
+    def _resolve_habit_xp(self, habit: Habit) -> int:
+        stored_xp = getattr(habit, "xp_reward", None)
+        if isinstance(stored_xp, (int, float)):
+            return int(stored_xp)
+        return self.calculate_xp(habit)
     
     def grant_xp(self, habit: Habit):
-        xp = self.calculate_xp(habit)
+        xp = self._resolve_habit_xp(habit)
         self.level.add_xp(xp)
+
+    def revoke_xp(self, habit: Habit):
+        xp = self._resolve_habit_xp(habit)
+        self.level.remove_xp(xp)

@@ -32,8 +32,8 @@ class HabitRepository:
     def delete_habit(self, habit_id: int):
         self.connection.delete_habit(habit_id)
 
-    def toggle_task_completion(self, habit_id: int):
-        self.connection.toggle_task_completion(habit_id)
+    def toggle_habit_completion(self, habit_id: int) -> bool:
+        return self.connection.toggle_habit_completion(habit_id)
 
     def update_habits(self):
         self.habits = self.connection.get_habits()
@@ -46,8 +46,4 @@ class HabitRepository:
         return -1
     
     def get_habit_by_id(self, habit_id: int) -> Habit:
-        self.update_habits()
-        for existing_habit in self.habits:
-            if existing_habit.id == habit_id:
-                return existing_habit
-        return None
+        return self.connection.get_habit_by_id(habit_id)
