@@ -3,6 +3,7 @@ from typing import Annotated
 
 class Habit:
     id: Annotated[int, "Auto-incremented primary key - Is created by the database and should not be edited manually"]
+    user_id: int
     name: str
     description: str
     frequency: Annotated[str, "e.g. 'once', 'daily', 'weekly', 'monthly'"]
@@ -14,11 +15,12 @@ class Habit:
     created_at: datetime
     updated_at: datetime
 
-    def __init__(self, name, description, frequency, difficulty):
+    def __init__(self, name, description, frequency, difficulty, user_id: int):
         self.name = name
         self.description = description
         self.frequency = frequency
         self.difficulty = difficulty
+        self.user_id = user_id
     
     def check_duplicate(self, other_habit: 'Habit') -> bool:
         return self.name == other_habit.name and self.description == other_habit.description and self.frequency == other_habit.frequency

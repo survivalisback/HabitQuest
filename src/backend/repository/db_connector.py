@@ -1,6 +1,7 @@
 import sqlite3, logging
 from datetime import datetime, timedelta
 from models.habit import Habit
+from models.user import User
 from config import settings
 
 logging.basicConfig(level=logging.INFO)
@@ -11,35 +12,52 @@ class DBConnector:
         settings.database_path.parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(str(settings.database_path))
         self.cursor = self.connection.cursor()
+        self.create_base_file()
+        self._ensure_habit_user_column()
 
-    def get_habits(self) -> list:
-        self.cursor.execute("SELECT * FROM Habit")
-        return self.cursor.fetchall()
+    def get_habits(self, user_id: int) -> list[Habit]:
+        self.cursor.execute(
+            """
+            SELECT habit_id, user_id, name, description, frequency, difficulty, xp_reward
+            FROM Habit
+            WHERE user_id = ?
+            ORDER BY habit_id
+            """,
+            (user_id,)
+        )
+        rows = self.cursor.fetchall()
+        habits = []
+        for row in rows:
+            habit = Habit(row[2], row[3], row[4], row[5], row[1])
+            habit.id = row[0]
+            habit.xp_reward = row[6]
+            habits.append(habit)
+        return habits
 
     def add_habit(self, habit: Habit) -> None:
         self.cursor.execute("""
-        INSERT INTO Habit (name, description, frequency, difficulty, xp_reward)
-        VALUES (?, ?, ?, ?, ?)
-        """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward))
+        INSERT INTO Habit (user_id, name, description, frequency, difficulty, xp_reward)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (habit.user_id, habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward))
         self.connection.commit()
 
-    def delete_habit(self, habit_id: int) -> None:
-        self.cursor.execute("DELETE FROM Habit WHERE habit_id = ?", (habit_id))
+    def delete_habit(self, habit_id: int, user_id: int) -> None:
+        self.cursor.execute("DELETE FROM Habit WHERE habit_id = ? AND user_id = ?", (habit_id, user_id))
         self.connection.commit()
 
-    def update_habit(self, habit_id: int, habit: Habit) -> None:
+    def update_habit(self, habit_id: int, habit: Habit, user_id: int) -> None:
         self.cursor.execute("""
         UPDATE Habit
         SET name = ?, description = ?, frequency = ?, difficulty = ?, xp_reward = ?
-        WHERE habit_id = ?
-        """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward, habit_id))
+        WHERE habit_id = ? AND user_id = ?
+        """, (habit.name, habit.description, habit.frequency, habit.difficulty, habit.xp_reward, habit_id, user_id))
         self.connection.commit()
 
     # TODO: Add toggle logic. Keep in mind, that a completed habit gets its own entry in the HabitCompleted table. Therefore, if the task is toggled twice, the entry in the HabitCompleted table should be deleted.
-    def toggle_habit_completion(self, habit_id: int) -> bool:
+    def toggle_habit_completion(self, habit_id: int, user_id: int) -> bool:
         self.cursor.execute(
-            "SELECT frequency FROM Habit WHERE habit_id = ?",
-            (habit_id,)
+            "SELECT frequency FROM Habit WHERE habit_id = ? AND user_id = ?",
+            (habit_id, user_id)
         )
         row = self.cursor.fetchone()
         if row is None:
@@ -81,23 +99,89 @@ class DBConnector:
         self.connection.commit()
         return bool(new_completed)
 
-    def get_habit_by_id(self, habit_id: int) -> Habit | None:
+    def get_habit_by_id(self, habit_id: int, user_id: int) -> Habit | None:
         self.cursor.execute(
             """
-            SELECT name, description, frequency, difficulty, xp_reward, habit_id
+            SELECT name, description, frequency, difficulty, xp_reward, habit_id, user_id
             FROM Habit
-            WHERE habit_id = ?
+            WHERE habit_id = ? AND user_id = ?
             """,
-            (habit_id,)
+            (habit_id, user_id)
         )
         row = self.cursor.fetchone()
         if row is None:
             return None
 
-        db_habit = Habit(row[0], row[1], row[2], row[3])
+        db_habit = Habit(row[0], row[1], row[2], row[3], row[6])
         db_habit.xp_reward = row[4]
         db_habit.id = row[5]
         return db_habit
+
+    def ensure_user(self, user: User) -> None:
+        self.cursor.execute(
+            """
+            INSERT OR IGNORE INTO UserLogin (userid, password)
+            VALUES (?, ?)
+            """,
+            (user.user_id, user.password)
+        )
+        self.cursor.execute(
+            """
+            INSERT OR IGNORE INTO User (userid, username)
+            VALUES (?, ?)
+            """,
+            (user.user_id, user.username)
+        )
+        self.connection.commit()
+
+    def get_user_id_by_username(self, username: str) -> int | None:
+        self.cursor.execute(
+            """
+            SELECT userid
+            FROM User
+            WHERE username = ?
+            """,
+            (username,)
+        )
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        return int(row[0])
+
+    def get_next_user_id(self) -> int:
+        self.cursor.execute(
+            """
+            SELECT COALESCE(MAX(userid), 0) + 1
+            FROM User
+            """
+        )
+        row = self.cursor.fetchone()
+        return int(row[0]) if row is not None else 1
+
+    def get_user_password_hash(self, user_id: int) -> str | None:
+        self.cursor.execute(
+            """
+            SELECT password
+            FROM UserLogin
+            WHERE userid = ?
+            """,
+            (user_id,)
+        )
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        return row[0]
+
+    def set_user_password_hash(self, user_id: int, password_hash: str) -> None:
+        self.cursor.execute(
+            """
+            INSERT INTO UserLogin (userid, password)
+            VALUES (?, ?)
+            ON CONFLICT(userid) DO UPDATE SET password = excluded.password
+            """,
+            (user_id, password_hash)
+        )
+        self.connection.commit()
 
     def _resolve_period_start(self, frequency: str) -> str:
         now = datetime.now().date()
@@ -146,8 +230,6 @@ class DBConnector:
         "username" TEXT,
         PRIMARY KEY("userid"),
         FOREIGN KEY ("userid") REFERENCES "UserLogin"("userid")
-        ON UPDATE NO ACTION ON DELETE NO ACTION,
-        FOREIGN KEY ("userid") REFERENCES "Habit"("user_id")
         ON UPDATE NO ACTION ON DELETE NO ACTION
         );
         """)
@@ -159,6 +241,13 @@ class DBConnector:
         );
         """)
         self.connection.commit()
+
+    def _ensure_habit_user_column(self) -> None:
+        self.cursor.execute("PRAGMA table_info(Habit)")
+        columns = {row[1] for row in self.cursor.fetchall()}
+        if "user_id" not in columns:
+            self.cursor.execute('ALTER TABLE Habit ADD COLUMN "user_id" INTEGER NOT NULL DEFAULT 1')
+            self.connection.commit()
 
     def close(self) -> None:
         self.connection.close()
