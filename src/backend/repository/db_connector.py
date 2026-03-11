@@ -134,6 +134,55 @@ class DBConnector:
         )
         self.connection.commit()
 
+    def get_user_id_by_username(self, username: str) -> int | None:
+        self.cursor.execute(
+            """
+            SELECT userid
+            FROM User
+            WHERE username = ?
+            """,
+            (username,)
+        )
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        return int(row[0])
+
+    def get_next_user_id(self) -> int:
+        self.cursor.execute(
+            """
+            SELECT COALESCE(MAX(userid), 0) + 1
+            FROM User
+            """
+        )
+        row = self.cursor.fetchone()
+        return int(row[0]) if row is not None else 1
+
+    def get_user_password_hash(self, user_id: int) -> str | None:
+        self.cursor.execute(
+            """
+            SELECT password
+            FROM UserLogin
+            WHERE userid = ?
+            """,
+            (user_id,)
+        )
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        return row[0]
+
+    def set_user_password_hash(self, user_id: int, password_hash: str) -> None:
+        self.cursor.execute(
+            """
+            INSERT INTO UserLogin (userid, password)
+            VALUES (?, ?)
+            ON CONFLICT(userid) DO UPDATE SET password = excluded.password
+            """,
+            (user_id, password_hash)
+        )
+        self.connection.commit()
+
     def _resolve_period_start(self, frequency: str) -> str:
         now = datetime.now().date()
         normalized = (frequency or "").lower()

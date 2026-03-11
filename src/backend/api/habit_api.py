@@ -1,15 +1,32 @@
 import fastapi
+from fastapi import HTTPException
 from dependencies import service
 
 habitRouter = fastapi.APIRouter()
 
 @habitRouter.post("/login")
-def login(user_id: int, username: str | None = None):
-    service.login_user(user_id, username)
-    return {"user_id": user_id, "username": username}
+def login(username: str, password: str):
+    try:
+        return service.login_user(username, password)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+@habitRouter.post("/register")
+def register(username: str, password: str):
+    try:
+        return service.register_user(username, password)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+def _get_user_id_from_token(token: str) -> int:
+    try:
+        return service.get_user_id_from_token(token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 @habitRouter.get("/habits")
-def get_habits(user_id: int):
+def get_habits(authorization: str = fastapi.Header(..., alias="Authorization")):
+    user_id = _get_user_id_from_token(authorization)
     habits = service.get_habits(user_id)
     return [
         {
@@ -25,19 +42,39 @@ def get_habits(user_id: int):
     ]
 
 @habitRouter.post("/createTask")
-def create_task(user_id: int, name: str, description: str, frequency: str, difficulty: int):
+def create_task(
+    name: str,
+    description: str,
+    frequency: str,
+    difficulty: int,
+    authorization: str = fastapi.Header(..., alias="Authorization"),
+):
+    user_id = _get_user_id_from_token(authorization)
     service.create_habit(user_id, name, description, frequency, difficulty)
 
 @habitRouter.put("/editTask")
-def edit_task(user_id: int, id: int, name: str, description: str, frequency: str, difficulty: int):
+def edit_task(
+    id: int,
+    name: str,
+    description: str,
+    frequency: str,
+    difficulty: int,
+    authorization: str = fastapi.Header(..., alias="Authorization"),
+):
+    user_id = _get_user_id_from_token(authorization)
     service.edit_habit(user_id, id, name, description, frequency, difficulty)
 
 @habitRouter.delete("/deleteTask")
-def delete_task(user_id: int, id: int):
+def delete_task(id: int, authorization: str = fastapi.Header(..., alias="Authorization")):
+    user_id = _get_user_id_from_token(authorization)
     service.delete_habit(user_id, id)
 
 @habitRouter.post("/toggleTaskCompletion")
-def toggle_habit_completion(user_id: int, id: int):
+def toggle_habit_completion(
+    id: int,
+    authorization: str = fastapi.Header(..., alias="Authorization"),
+):
+    user_id = _get_user_id_from_token(authorization)
     completed = service.toggle_habit_completion(user_id, id)
     return {"habit_id": id, "completed": completed}
 
