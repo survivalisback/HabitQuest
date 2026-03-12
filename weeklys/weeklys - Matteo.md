@@ -58,6 +58,7 @@ Daran arbeite ich als nächstes:
 - Datenbank erweitern/anpassen
     - Für toggle funktion und ggf. Rewards
 - ggf. KI Anbindung
+
 ## Week 4 - 09.03.2026 - 13.03.2026
  
 Das habe ich geschafft:
