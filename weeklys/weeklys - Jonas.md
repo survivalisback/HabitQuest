@@ -62,3 +62,14 @@ Das habe ich geschafft:
 Daran arbeite ich als nächstes:
 - Gamification-Logik im Frontend (XP vergeben, Level-Ups)
 - Vollständige Backend-Anbindung
+
+## Week 4 - 09.03.2026 - 13.03.2026
+
+Das habe ich geschafft:
+- Login-Screen implementiert: POST an `/login` & `/register`, JWT im localStorage, Fehlermeldungen
+- Gamification-Panel fertiggestellt: XP, Level (11 Stufen), Streak, Today's Progress, 6 Achievements
+- Frontend vollständig ans Backend angebunden: Habits laden, erstellen (inkl. Difficulty), löschen, abhaken
+- XP-Toast-Benachrichtigung und dynamische Achievement-Freischaltung
+
+Daran arbeite ich als nächstes:
+- Gamification-Daten ins Backend persistieren (aktuell localStorage)

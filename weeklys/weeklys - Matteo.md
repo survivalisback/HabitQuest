@@ -58,3 +58,20 @@ Daran arbeite ich als nächstes:
 - Datenbank erweitern/anpassen
     - Für toggle funktion und ggf. Rewards
 - ggf. KI Anbindung
+## Week 4 - 09.03.2026 - 13.03.2026
+ 
+Das habe ich geschafft:
+- Erste manuelle tests ob Frontend zu Backend Anbindung funktioniert
+- Toggle Funktion implementiert
+    - inkl. abezogener XP-Rewards, sollte ein Habit zurück getoggled werden
+- Multi-User-Support implementiert
+    - Anmeldung/Registierung
+    - User bezogene Habit-Speicherung
+    - Datenbank erweitert/angepasst
+    - JWT Tokens zur Verifizierung auch ohne Anmeldung
+    - Anpassen der API Endpunkte sowie der Servicelogik zur Verwendung der JWT Tokens
+ 
+Daran arbeite ich als nächstes:
+- Erneute manuelle tests ob Frontend zu Backend Anbindung funktioniert
+    - Mit JWT Tokens/Login
+- KI Anbindung zur XP-Berechnung
