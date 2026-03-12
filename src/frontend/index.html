@@ -7,13 +7,44 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
+
+  <!-- ── Login Overlay ────────────────────────────────────────────────────── -->
+  <div id="login-overlay">
+    <div id="login-card">
+      <div id="login-brand">HabitQuest</div>
+      <p id="login-tagline">Track habits. Earn XP. Level up.</p>
+
+      <div id="login-error" class="hidden" role="alert"></div>
+
+      <div class="form-field">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" placeholder="Enter username" autocomplete="username" />
+      </div>
+      <div class="form-field">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="Enter password" autocomplete="current-password" />
+      </div>
+
+      <button id="btn-login" class="btn-primary full-width">Sign in</button>
+      <div class="login-divider"><span>or</span></div>
+      <button id="btn-register" class="btn-outline full-width">Create account</button>
+    </div>
+  </div>
+
+  <!-- ── Main App ──────────────────────────────────────────────────────────── -->
+  <div id="app" class="hidden">
+
     <header>
       <h1>HabitQuest</h1>
+      <div id="header-user">
+        <span id="header-username"></span>
+        <button id="btn-logout">Sign out</button>
+      </div>
     </header>
 
     <main id="main-layout">
 
+      <!-- Left: Habit Panel -->
       <section id="habit-panel" class="panel">
 
         <div id="habit-input-area">
@@ -25,17 +56,32 @@
           />
           <div id="input-actions">
             <button id="btn-track-now">Track Now</button>
-            <button id="btn-add-recurring">Add as Recurring</button>
+            <button id="btn-add-recurring">Add Recurring</button>
           </div>
 
-          <div id="frequency-picker" class="hidden">
-            <span class="freq-label">Choose frequency:</span>
-            <div class="freq-buttons">
-              <button class="freq-btn" data-freq="daily">Daily</button>
-              <button class="freq-btn" data-freq="weekly">Weekly</button>
-              <button class="freq-btn" data-freq="monthly">Monthly</button>
+          <div id="recurring-config" class="hidden">
+            <div class="config-row">
+              <span class="config-label">Frequency</span>
+              <div class="freq-buttons">
+                <button class="freq-btn" data-freq="daily">Daily</button>
+                <button class="freq-btn" data-freq="weekly">Weekly</button>
+                <button class="freq-btn" data-freq="monthly">Monthly</button>
+              </div>
             </div>
-            <button id="btn-cancel-freq">Cancel</button>
+            <div class="config-row">
+              <span class="config-label">Difficulty</span>
+              <div id="difficulty-buttons">
+                <button class="diff-btn" data-diff="1" title="Very Easy">1</button>
+                <button class="diff-btn" data-diff="2" title="Easy">2</button>
+                <button class="diff-btn" data-diff="3" title="Medium">3</button>
+                <button class="diff-btn" data-diff="4" title="Hard">4</button>
+                <button class="diff-btn" data-diff="5" title="Very Hard">5</button>
+              </div>
+            </div>
+            <div id="recurring-actions">
+              <button id="btn-confirm-recurring">Add Habit</button>
+              <button id="btn-cancel-recurring">Cancel</button>
+            </div>
           </div>
         </div>
 
@@ -64,68 +110,90 @@
         </div>
       </section>
 
+      <!-- Right: Gamification Panel -->
       <aside id="gamification-panel" class="panel">
+
         <div id="player-info">
           <div id="level-display">
-            <span class="level-label">Level</span>
+            <span class="level-label">LVL</span>
             <span id="level-number">1</span>
           </div>
-          <div id="player-name">Adventurer</div>
+          <div id="player-details">
+            <div id="player-name">Adventurer</div>
+            <div id="player-title">Beginner</div>
+          </div>
         </div>
 
         <div id="xp-section">
           <div id="xp-label-row">
-            <span>XP</span>
-            <span id="xp-text">0 / 100</span>
+            <span>Experience</span>
+            <span id="xp-text">0 / 100 XP</span>
           </div>
           <div id="xp-bar-container">
-            <div id="xp-bar-fill" style="width: 0%"></div>
+            <div id="xp-bar-fill"></div>
           </div>
         </div>
 
-        <div id="streak-section">
-          <span class="stat-icon">🔥</span>
-          <div>
-            <div class="stat-value" id="streak-value">0</div>
-            <div class="stat-label">Day Streak</div>
+        <div id="stats-row">
+          <div class="stat-card">
+            <span class="stat-icon">🔥</span>
+            <span class="stat-value" id="streak-value">0</span>
+            <span class="stat-label">Day Streak</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">✓</span>
+            <span class="stat-value" id="completions-value">0</span>
+            <span class="stat-label">Total Done</span>
+          </div>
+        </div>
+
+        <div id="today-progress">
+          <div id="today-label-row">
+            <span>Today's Progress</span>
+            <span id="today-text">0 / 0</span>
+          </div>
+          <div id="today-bar-container">
+            <div id="today-bar-fill"></div>
           </div>
         </div>
 
         <div id="achievements-section">
           <h3>Achievements</h3>
           <div id="achievement-grid">
-            <div class="achievement-badge locked" title="First Step — Complete your first habit">
+            <div class="achievement-badge locked" id="ach-first-step" title="First Step — Complete your first habit">
               <span class="badge-icon">⭐</span>
               <span class="badge-name">First Step</span>
             </div>
-            <div class="achievement-badge locked" title="Week Warrior — 7-day streak">
+            <div class="achievement-badge locked" id="ach-week-warrior" title="Week Warrior — 7-day streak">
               <span class="badge-icon">🛡️</span>
               <span class="badge-name">Week Warrior</span>
             </div>
-            <div class="achievement-badge locked" title="Habit Master — 10 habits tracked">
+            <div class="achievement-badge locked" id="ach-habit-master" title="Habit Master — 10 habits created">
               <span class="badge-icon">👑</span>
               <span class="badge-name">Habit Master</span>
             </div>
-            <div class="achievement-badge locked" title="Consistent — 30-day streak">
+            <div class="achievement-badge locked" id="ach-consistent" title="Consistent — 30-day streak">
               <span class="badge-icon">💎</span>
               <span class="badge-name">Consistent</span>
             </div>
-            <div class="achievement-badge locked" title="Explorer — Try all frequencies">
+            <div class="achievement-badge locked" id="ach-explorer" title="Explorer — Use all frequencies">
               <span class="badge-icon">🗺️</span>
               <span class="badge-name">Explorer</span>
             </div>
-            <div class="achievement-badge locked" title="Legend — 100 completions">
+            <div class="achievement-badge locked" id="ach-legend" title="Legend — 100 total completions">
               <span class="badge-icon">🏆</span>
               <span class="badge-name">Legend</span>
             </div>
           </div>
         </div>
 
-        <div id="coming-soon-label">Full gamification coming soon</div>
       </aside>
 
     </main>
   </div>
+
+  <!-- XP Toast -->
+  <div id="xp-toast" class="hidden"></div>
 
   <script src="app.js"></script>
 </body>
