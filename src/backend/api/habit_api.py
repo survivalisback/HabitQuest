@@ -48,27 +48,33 @@ def get_habits(
 @habitRouter.post("/createTask")
 def create_task(
     name: str,
-    description: str,
-    frequency: str,
+    frequency: str ,
     difficulty: int,
+    description: str = "",
     authorization: str = fastapi.Header(..., alias="Authorization"),
     service: Service = Depends(get_service),
 ):
     user_id = _get_user_id_from_token(authorization, service)
-    service.create_habit(user_id, name, description, frequency, difficulty)
+    try:
+        service.create_habit(user_id, name, description, frequency, difficulty)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 @habitRouter.put("/editTask")
 def edit_task(
     id: int,
     name: str,
-    description: str,
     frequency: str,
     difficulty: int,
+    description: str = "",
     authorization: str = fastapi.Header(..., alias="Authorization"),
     service: Service = Depends(get_service),
 ):
     user_id = _get_user_id_from_token(authorization, service)
-    service.edit_habit(user_id, id, name, description, frequency, difficulty)
+    try:
+        service.edit_habit(user_id, id, name, description, frequency, difficulty)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 @habitRouter.delete("/deleteTask")
 def delete_task(

@@ -17,14 +17,15 @@ class HabitRepository:
         self.update_habits(user_id)
         if any(existing_habit.check_duplicate(habit) for existing_habit in self.habits):
             logger.warning("Duplicate habit detected. Habit not added.")
-            return
+            raise ValueError("Habit already exists.")
         if not habit.is_valid():
             logger.warning("Invalid habit data. Habit not added.")
-            return
+            raise ValueError("Invalid habit data.")
         try:
             self.connection.add_habit(habit)
         except Exception as e:
             logger.error(f"Error adding habit to database: {e}")
+            raise
 
     def update_habit(self, habit_id: int, habit: Habit, user_id: int):
         self.connection.update_habit(habit_id, habit, user_id)

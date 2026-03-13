@@ -12,8 +12,7 @@ class DBConnector:
         settings.database_path.parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(str(settings.database_path))
         self.cursor = self.connection.cursor()
-        self.create_base_file()
-        self._ensure_habit_user_column()
+        self._ensure_schema()
 
     def get_habits(self, user_id: int) -> list[Habit]:
         self.cursor.execute(
@@ -241,6 +240,64 @@ class DBConnector:
         );
         """)
         self.connection.commit()
+
+    def _ensure_schema(self) -> None:
+        self._migrate_legacy_habit_table()
+        self._migrate_legacy_habit_completed_table()
+        self.create_base_file()
+        self._ensure_habit_user_column()
+
+    def _table_exists(self, name: str) -> bool:
+        self.cursor.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+            (name,)
+        )
+        return self.cursor.fetchone() is not None
+
+    def _table_columns(self, name: str) -> set[str]:
+        self.cursor.execute(f"PRAGMA table_info({name})")
+        return {row[1] for row in self.cursor.fetchall()}
+
+    def _migrate_legacy_habit_table(self) -> None:
+        if not self._table_exists("Habit"):
+            return
+
+        columns = self._table_columns("Habit")
+        if "habit_id" in columns:
+            return
+
+        if "id" not in columns:
+            return
+
+        legacy_name = f'Habit_legacy_{datetime.now().strftime("%Y%m%d%H%M%S")}'
+        logger.warning("Legacy Habit schema detected. Migrating to habit_id; backing up to %s.", legacy_name)
+        self.cursor.execute(f'ALTER TABLE "Habit" RENAME TO "{legacy_name}"')
+        self.create_base_file()
+        self.cursor.execute(
+            f"""
+            INSERT INTO Habit (habit_id, user_id, name, description, frequency, difficulty, xp_reward)
+            SELECT id, user_id, name, description, frequency, difficulty, xp_reward
+            FROM "{legacy_name}"
+            """
+        )
+        self.connection.commit()
+
+    def _migrate_legacy_habit_completed_table(self) -> None:
+        if not self._table_exists("HabitCompleted"):
+            return
+
+        columns = self._table_columns("HabitCompleted")
+        expected = {"habit_completed_id", "habitID", "period_start", "completed", "completed_at"}
+        if expected.issubset(columns):
+            return
+
+        legacy_name = f'HabitCompleted_legacy_{datetime.now().strftime("%Y%m%d%H%M%S")}'
+        logger.warning(
+            "Legacy HabitCompleted schema detected. Recreating table; backing up to %s.",
+            legacy_name,
+        )
+        self.cursor.execute(f'ALTER TABLE "HabitCompleted" RENAME TO "{legacy_name}"')
+        self.create_base_file()
 
     def _ensure_habit_user_column(self) -> None:
         self.cursor.execute("PRAGMA table_info(Habit)")
