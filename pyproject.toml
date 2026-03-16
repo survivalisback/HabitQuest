@@ -11,4 +11,5 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "uvicorn>=0.41.0",
     "bcrypt>=3.2,<4",
+    "anthropic>=0.40.0",
 ]

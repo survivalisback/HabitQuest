@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class DBConnector:
     def __init__(self):
         settings.database_path.parent.mkdir(parents=True, exist_ok=True)
-        self.connection = sqlite3.connect(str(settings.database_path))
+        self.connection = sqlite3.connect(str(settings.database_path), check_same_thread=False)
         self.cursor = self.connection.cursor()
         self._ensure_schema()
 
@@ -194,6 +194,76 @@ class DBConnector:
             return "1970-01-01"
         return now.isoformat()
 
+    def get_completion_history(self, habit_id: int, limit: int = 60) -> list[dict]:
+        self.cursor.execute(
+            """
+            SELECT period_start, completed_at
+            FROM HabitCompleted
+            WHERE habitID = ? AND completed = 1
+            ORDER BY period_start DESC
+            LIMIT ?
+            """,
+            (habit_id, limit),
+        )
+        return [
+            {"period_start": row[0], "completed_at": row[1]}
+            for row in self.cursor.fetchall()
+        ]
+
+    def get_all_habit_streaks(self, user_id: int) -> dict[int, dict]:
+        self.cursor.execute(
+            """
+            SELECT h.habit_id, h.frequency, hc.period_start
+            FROM Habit h
+            JOIN HabitCompleted hc ON hc.habitID = h.habit_id AND hc.completed = 1
+            WHERE h.user_id = ?
+            ORDER BY h.habit_id, hc.period_start DESC
+            """,
+            (user_id,),
+        )
+        from collections import defaultdict
+        habit_completions: dict[int, list[dict]] = defaultdict(list)
+        habit_freqs: dict[int, str] = {}
+        for row in self.cursor.fetchall():
+            habit_id_val, freq, period = row
+            habit_freqs[habit_id_val] = freq
+            habit_completions[habit_id_val].append({"period_start": period})
+
+        return {"completions": habit_completions, "frequencies": habit_freqs}
+
+    def get_user_progress(self, user_id: int) -> dict:
+        self.cursor.execute(
+            "SELECT total_xp, total_completions FROM UserProgress WHERE user_id = ?",
+            (user_id,),
+        )
+        row = self.cursor.fetchone()
+        if row is None:
+            return {"total_xp": 0, "total_completions": 0}
+        return {"total_xp": row[0], "total_completions": row[1]}
+
+    def update_user_xp(self, user_id: int, xp_delta: int) -> None:
+        self.ensure_user_progress(user_id)
+        self.cursor.execute(
+            "UPDATE UserProgress SET total_xp = MAX(0, total_xp + ?) WHERE user_id = ?",
+            (xp_delta, user_id),
+        )
+        self.connection.commit()
+
+    def increment_completions(self, user_id: int, delta: int) -> None:
+        self.ensure_user_progress(user_id)
+        self.cursor.execute(
+            "UPDATE UserProgress SET total_completions = MAX(0, total_completions + ?) WHERE user_id = ?",
+            (delta, user_id),
+        )
+        self.connection.commit()
+
+    def ensure_user_progress(self, user_id: int) -> None:
+        self.cursor.execute(
+            "INSERT OR IGNORE INTO UserProgress (user_id, total_xp, total_completions) VALUES (?, 0, 0)",
+            (user_id,),
+        )
+        self.connection.commit()
+
     def create_base_file(self) -> None:
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS "Habit" (
@@ -239,6 +309,13 @@ class DBConnector:
         PRIMARY KEY("userid")
         );
         """)
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS "UserProgress" (
+        "user_id" INTEGER PRIMARY KEY,
+        "total_xp" INTEGER NOT NULL DEFAULT 0,
+        "total_completions" INTEGER NOT NULL DEFAULT 0
+        );
+        """)
         self.connection.commit()
 
     def _ensure_schema(self) -> None:
@@ -271,12 +348,14 @@ class DBConnector:
 
         legacy_name = f'Habit_legacy_{datetime.now().strftime("%Y%m%d%H%M%S")}'
         logger.warning("Legacy Habit schema detected. Migrating to habit_id; backing up to %s.", legacy_name)
+        legacy_columns = columns
         self.cursor.execute(f'ALTER TABLE "Habit" RENAME TO "{legacy_name}"')
         self.create_base_file()
+        user_id_expr = "user_id" if "user_id" in legacy_columns else "1"
         self.cursor.execute(
             f"""
             INSERT INTO Habit (habit_id, user_id, name, description, frequency, difficulty, xp_reward)
-            SELECT id, user_id, name, description, frequency, difficulty, xp_reward
+            SELECT id, {user_id_expr}, name, description, frequency, difficulty, xp_reward
             FROM "{legacy_name}"
             """
         )

@@ -32,6 +32,7 @@ def get_habits(
 ):
     user_id = _get_user_id_from_token(authorization, service)
     habits = service.get_habits(user_id)
+    streaks = service.get_habit_streaks(user_id)
     return [
         {
             "id": habit.id,
@@ -41,9 +42,18 @@ def get_habits(
             "frequency": habit.frequency,
             "difficulty": habit.difficulty,
             "xp_reward": habit.xp_reward,
+            "streak": streaks.get(habit.id, 0),
         }
         for habit in habits
     ]
+
+@habitRouter.get("/profile")
+def get_profile(
+    authorization: str = fastapi.Header(..., alias="Authorization"),
+    service: Service = Depends(get_service),
+):
+    user_id = _get_user_id_from_token(authorization, service)
+    return service.get_profile(user_id)
 
 @habitRouter.post("/createTask")
 def create_task(
@@ -92,7 +102,15 @@ def toggle_habit_completion(
     service: Service = Depends(get_service),
 ):
     user_id = _get_user_id_from_token(authorization, service)
-    completed = service.toggle_habit_completion(user_id, id)
-    return {"habit_id": id, "completed": completed}
+    return service.toggle_habit_completion(user_id, id)
 
-# TODO: Get habit_id in frontend or does it come with the habit object?
+@habitRouter.post("/trackOneTime")
+def track_one_time(
+    name: str,
+    difficulty: int,
+    description: str = "",
+    authorization: str = fastapi.Header(..., alias="Authorization"),
+    service: Service = Depends(get_service),
+):
+    user_id = _get_user_id_from_token(authorization, service)
+    return service.track_one_time(user_id, name, description, difficulty)
