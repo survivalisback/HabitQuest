@@ -11,6 +11,47 @@ class AiClient:
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
 
+    def evaluate_habit(
+        self,
+        name: str,
+        description: str,
+        frequency: str,
+    ) -> dict | None:
+        """Evaluate both difficulty and XP for a habit in a single AI call.
+
+        Returns {"difficulty": int, "xp": int, "reasoning": str} or None on failure.
+        """
+        prompt = (
+            f"You are an evaluator for a gamified habit tracker.\n"
+            f"Assess this habit's difficulty and assign a fair XP reward.\n\n"
+            f"Habit: {name}\n"
+            f"Description: {description or 'N/A'}\n"
+            f"Frequency: {frequency}\n\n"
+            f"Difficulty scale: 1 (trivial) to 5 (very hard).\n"
+            f"XP guidelines: base is difficulty * 10, multiplied by frequency "
+            f"(daily=1x, weekly=1.5x, monthly=2x, once=1x). "
+            f"You may adjust XP within 0.5x–2x of that base.\n\n"
+            f"Consider the effort, impact, and consistency required.\n"
+            f"Return ONLY valid JSON: "
+            f"{{\"difficulty\": <1-5>, \"xp\": <integer>, \"reasoning\": \"<short explanation>\"}}"
+        )
+
+        try:
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=250,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = response.content[0].text.strip()
+            data = self._parse_json_response(text)
+            difficulty = max(1, min(5, int(data["difficulty"])))
+            xp = max(5, int(data["xp"]))
+            reasoning = str(data.get("reasoning", ""))
+            return {"difficulty": difficulty, "xp": xp, "reasoning": reasoning}
+        except Exception as e:
+            logger.warning("AI habit evaluation failed: %s", e)
+            return None
+
     def evaluate_habit_xp(
         self,
         name: str,

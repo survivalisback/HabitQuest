@@ -58,15 +58,14 @@ def get_profile(
 @habitRouter.post("/createTask")
 def create_task(
     name: str,
-    frequency: str ,
-    difficulty: int,
+    frequency: str,
     description: str = "",
     authorization: str = fastapi.Header(..., alias="Authorization"),
     service: Service = Depends(get_service),
 ):
     user_id = _get_user_id_from_token(authorization, service)
     try:
-        service.create_habit(user_id, name, description, frequency, difficulty)
+        service.create_habit(user_id, name, description, frequency)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -75,14 +74,13 @@ def edit_task(
     id: int,
     name: str,
     frequency: str,
-    difficulty: int,
     description: str = "",
     authorization: str = fastapi.Header(..., alias="Authorization"),
     service: Service = Depends(get_service),
 ):
     user_id = _get_user_id_from_token(authorization, service)
     try:
-        service.edit_habit(user_id, id, name, description, frequency, difficulty)
+        service.edit_habit(user_id, id, name, description, frequency)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -107,10 +105,9 @@ def toggle_habit_completion(
 @habitRouter.post("/trackOneTime")
 def track_one_time(
     name: str,
-    difficulty: int,
     description: str = "",
     authorization: str = fastapi.Header(..., alias="Authorization"),
     service: Service = Depends(get_service),
 ):
     user_id = _get_user_id_from_token(authorization, service)
-    return service.track_one_time(user_id, name, description, difficulty)
+    return service.track_one_time(user_id, name, description)

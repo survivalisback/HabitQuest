@@ -373,7 +373,11 @@ class DBConnector:
         legacy_name = f'Habit_legacy_{datetime.now().strftime("%Y%m%d%H%M%S")}'
         logger.warning("Legacy Habit schema detected. Migrating to habit_id; backing up to %s.", legacy_name)
         legacy_columns = columns
-        self.cursor.execute(f'ALTER TABLE "Habit" RENAME TO "{legacy_name}"')
+        try:
+            self.cursor.execute(f'ALTER TABLE "Habit" RENAME TO "{legacy_name}"')
+        except sqlite3.OperationalError:
+            logger.info("Legacy Habit table already migrated by another connection.")
+            return
         self.create_base_file()
         user_id_expr = "user_id" if "user_id" in legacy_columns else "1"
         self.cursor.execute(
@@ -399,7 +403,11 @@ class DBConnector:
             "Legacy HabitCompleted schema detected. Recreating table; backing up to %s.",
             legacy_name,
         )
-        self.cursor.execute(f'ALTER TABLE "HabitCompleted" RENAME TO "{legacy_name}"')
+        try:
+            self.cursor.execute(f'ALTER TABLE "HabitCompleted" RENAME TO "{legacy_name}"')
+        except sqlite3.OperationalError:
+            logger.info("Legacy HabitCompleted table already migrated by another connection.")
+            return
         self.create_base_file()
 
     def _ensure_habit_user_column(self) -> None:

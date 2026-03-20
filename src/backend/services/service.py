@@ -69,21 +69,21 @@ class Service:
             raise ValueError("Invalid or expired token.")
         return user_id
 
-    def create_habit(self, user_id: int, name: str, description: str, frequency: str, difficulty: int):
+    def create_habit(self, user_id: int, name: str, description: str, frequency: str):
         if frequency == "once":
             raise ValueError("One-time habits should use the /trackOneTime endpoint.")
-        habit = Habit(name, description, frequency, difficulty, user_id)
-        habit.xp_reward = self.xp_provider.calculate_xp(habit)
+        habit = Habit(name, description, frequency, 3, user_id)
+        evaluation = self.xp_provider.evaluate_habit(habit)
+        habit.difficulty = evaluation["difficulty"]
+        habit.xp_reward = evaluation["xp"]
         habit.updated_at = habit.created_at = datetime.now()
         self.habit_repository.create_habit(habit, user_id)
 
-    def edit_habit(self, user_id: int, habit_id: int, name: str, description: str, frequency: str, difficulty: int):
-        habit = Habit(name, description, frequency, difficulty, user_id)
-        existing_habit = self.habit_repository.get_habit_by_id(habit_id, user_id)
-        if existing_habit is not None and getattr(existing_habit, "xp_reward", None) is not None:
-            habit.xp_reward = existing_habit.xp_reward
-        else:
-            habit.xp_reward = self.xp_provider.calculate_xp(habit)
+    def edit_habit(self, user_id: int, habit_id: int, name: str, description: str, frequency: str):
+        habit = Habit(name, description, frequency, 3, user_id)
+        evaluation = self.xp_provider.evaluate_habit(habit)
+        habit.difficulty = evaluation["difficulty"]
+        habit.xp_reward = evaluation["xp"]
         habit.updated_at = datetime.now()
         self.habit_repository.update_habit(habit_id, habit, user_id)
 
@@ -139,9 +139,11 @@ class Service:
             "level_info": level_info,
         }
 
-    def track_one_time(self, user_id: int, name: str, description: str, difficulty: int) -> dict:
-        habit = Habit(name, description, "once", difficulty, user_id)
-        xp = self.xp_provider.calculate_xp(habit)
+    def track_one_time(self, user_id: int, name: str, description: str) -> dict:
+        habit = Habit(name, description, "once", 3, user_id)
+        evaluation = self.xp_provider.evaluate_habit(habit)
+        habit.difficulty = evaluation["difficulty"]
+        xp = evaluation["xp"]
         self.db.update_user_xp(user_id, xp)
         self.db.increment_completions(user_id, 1)
         progress = self.db.get_user_progress(user_id)

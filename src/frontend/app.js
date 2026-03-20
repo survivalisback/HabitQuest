@@ -10,8 +10,6 @@ const state = {
   habits:   [],
   profile:  null,  // fetched from backend
   selectedFrequency: null,
-  selectedDifficulty: null,
-  onetimeDifficulty: null,
 };
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -315,7 +313,6 @@ async function handleAddRecurring() {
   if (!name) { showFeedback('Please enter a habit name.', 'error'); return; }
   if (!state.selectedFrequency) { showFeedback('Please choose a frequency.', 'error'); return; }
 
-  const difficulty   = state.selectedDifficulty ?? 1;
   const description  = document.getElementById('habit-desc-input').value.trim();
 
   try {
@@ -323,7 +320,6 @@ async function handleAddRecurring() {
       name,
       description,
       frequency:   state.selectedFrequency,
-      difficulty:  difficulty,
     });
     state.habits = await apiFetchHabits();
     state.profile = await apiFetchProfile();
@@ -346,13 +342,12 @@ async function handleTrackNow() {
 
 async function handleConfirmOneTime() {
   const name        = document.getElementById('habit-name-input').value.trim();
-  const difficulty  = state.onetimeDifficulty ?? 1;
   const description = document.getElementById('onetime-desc-input').value.trim();
 
   if (!name) { showFeedback('Please enter a habit name.', 'error'); return; }
 
   try {
-    const result = await apiPost('/trackOneTime', { name, difficulty, description });
+    const result = await apiPost('/trackOneTime', { name, description });
     showXpToast(result.xp_reward);
     showFeedback(`"${name}" tracked! +${result.xp_reward} XP`, 'success');
 
@@ -378,16 +373,14 @@ async function handleConfirmOneTime() {
 function showRecurringConfig() {
   hideOneTimeConfig();
   document.getElementById('recurring-config').classList.remove('hidden');
-  document.querySelectorAll('.freq-btn, .diff-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
   state.selectedFrequency  = null;
-  state.selectedDifficulty = null;
   document.getElementById('habit-desc-input').value = '';
 }
 
 function hideRecurringConfig() {
   document.getElementById('recurring-config').classList.add('hidden');
   state.selectedFrequency  = null;
-  state.selectedDifficulty = null;
   document.getElementById('habit-desc-input').value = '';
 }
 
@@ -395,14 +388,11 @@ function hideRecurringConfig() {
 function showOneTimeConfig() {
   hideRecurringConfig();
   document.getElementById('one-time-config').classList.remove('hidden');
-  document.querySelectorAll('.onetime-diff-btn').forEach(b => b.classList.remove('active'));
-  state.onetimeDifficulty = null;
   document.getElementById('onetime-desc-input').value = '';
 }
 
 function hideOneTimeConfig() {
   document.getElementById('one-time-config').classList.add('hidden');
-  state.onetimeDifficulty = null;
 }
 
 // ─── Login Overlay ────────────────────────────────────────────────────────────
@@ -534,24 +524,6 @@ function initApp() {
       document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.selectedFrequency = btn.dataset.freq;
-    })
-  );
-
-  // Difficulty selection (recurring)
-  document.querySelectorAll('.diff-btn').forEach(btn =>
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.selectedDifficulty = parseInt(btn.dataset.diff, 10);
-    })
-  );
-
-  // Difficulty selection (one-time)
-  document.querySelectorAll('.onetime-diff-btn').forEach(btn =>
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.onetime-diff-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.onetimeDifficulty = parseInt(btn.dataset.diff, 10);
     })
   );
 
