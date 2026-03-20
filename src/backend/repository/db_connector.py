@@ -11,6 +11,7 @@ class DBConnector:
     def __init__(self):
         settings.database_path.parent.mkdir(parents=True, exist_ok=True)
         self.connection = sqlite3.connect(str(settings.database_path), check_same_thread=False)
+        self.connection.execute("PRAGMA foreign_keys = ON")
         self.cursor = self.connection.cursor()
         self._ensure_schema()
 
@@ -290,32 +291,11 @@ class DBConnector:
 
     def create_base_file(self) -> None:
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS "Habit" (
-        "habit_id" INTEGER NOT NULL UNIQUE,
-        "user_id" INTEGER NOT NULL,
-        "name" TEXT NOT NULL,
-        "description" TEXT,
-        "frequency" TEXT NOT NULL,
-        "difficulty" INTEGER NOT NULL,
-        "xp_reward" INTEGER NOT NULL,
-        PRIMARY KEY("habit_id")
+        CREATE TABLE IF NOT EXISTS "UserLogin" (
+        "userid" INTEGER NOT NULL UNIQUE,
+        "password" TEXT NOT NULL,
+        PRIMARY KEY("userid")
         );
-        """)
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS "HabitCompleted" (
-        "habit_completed_id" INTEGER NOT NULL UNIQUE,
-        "habitID" INTEGER NOT NULL,
-        "period_start" DATE NOT NULL,
-        "completed" BOOLEAN NOT NULL,
-        "completed_at" TIMESTAMP NOT NULL,
-        PRIMARY KEY("habit_completed_id"),
-        FOREIGN KEY ("habitID") REFERENCES "Habit"("habit_id")
-        ON UPDATE NO ACTION ON DELETE NO ACTION
-        );
-        """)
-        self.cursor.execute("""
-        CREATE UNIQUE INDEX IF NOT EXISTS "idx_habit_completed_unique_period"
-        ON HabitCompleted ("habitID", "period_start");
         """)
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS "User" (
@@ -327,17 +307,42 @@ class DBConnector:
         );
         """)
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS "UserLogin" (
-        "userid" INTEGER NOT NULL UNIQUE,
-        "password" TEXT NOT NULL,
-        PRIMARY KEY("userid")
+        CREATE TABLE IF NOT EXISTS "Habit" (
+        "habit_id" INTEGER NOT NULL UNIQUE,
+        "user_id" INTEGER NOT NULL,
+        "name" TEXT NOT NULL,
+        "description" TEXT,
+        "frequency" TEXT NOT NULL,
+        "difficulty" INTEGER NOT NULL,
+        "xp_reward" INTEGER NOT NULL,
+        PRIMARY KEY("habit_id"),
+        FOREIGN KEY ("user_id") REFERENCES "User"("userid")
+        ON UPDATE NO ACTION ON DELETE CASCADE
         );
+        """)
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS "HabitCompleted" (
+        "habit_completed_id" INTEGER NOT NULL UNIQUE,
+        "habitID" INTEGER NOT NULL,
+        "period_start" DATE NOT NULL,
+        "completed" BOOLEAN NOT NULL,
+        "completed_at" TIMESTAMP NOT NULL,
+        PRIMARY KEY("habit_completed_id"),
+        FOREIGN KEY ("habitID") REFERENCES "Habit"("habit_id")
+        ON UPDATE NO ACTION ON DELETE CASCADE
+        );
+        """)
+        self.cursor.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "idx_habit_completed_unique_period"
+        ON HabitCompleted ("habitID", "period_start");
         """)
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS "UserProgress" (
         "user_id" INTEGER PRIMARY KEY,
         "total_xp" INTEGER NOT NULL DEFAULT 0,
-        "total_completions" INTEGER NOT NULL DEFAULT 0
+        "total_completions" INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY ("user_id") REFERENCES "User"("userid")
+        ON UPDATE NO ACTION ON DELETE CASCADE
         );
         """)
         self.connection.commit()
