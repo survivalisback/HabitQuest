@@ -191,6 +191,34 @@
     </main>
   </div>
 
+  <!-- Edit Modal -->
+  <div id="edit-modal-overlay" class="hidden">
+    <div id="edit-modal">
+      <h2>Edit Habit</h2>
+      <input type="hidden" id="edit-habit-id" />
+      <div class="form-field">
+        <label for="edit-habit-name">Name</label>
+        <input id="edit-habit-name" type="text" placeholder="Habit name" autocomplete="off" />
+      </div>
+      <div class="form-field">
+        <label for="edit-habit-desc">Description</label>
+        <textarea id="edit-habit-desc" placeholder="Description (optional)" rows="2"></textarea>
+      </div>
+      <div class="form-field">
+        <label>Frequency</label>
+        <div class="freq-buttons">
+          <button class="edit-freq-btn" data-freq="daily">Daily</button>
+          <button class="edit-freq-btn" data-freq="weekly">Weekly</button>
+          <button class="edit-freq-btn" data-freq="monthly">Monthly</button>
+        </div>
+      </div>
+      <div id="edit-actions">
+        <button id="btn-save-edit" class="btn-primary">Save</button>
+        <button id="btn-cancel-edit" class="btn-outline">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- XP Toasts -->
   <div id="xp-toast-container"></div>
 

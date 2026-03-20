@@ -10,6 +10,7 @@ const state = {
   habits:   [],
   profile:  null,  // fetched from backend
   selectedFrequency: null,
+  editFrequency: null,
 };
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -41,6 +42,16 @@ function authHeaders() {
 async function apiPost(path, params) {
   const url = `${API_BASE}${path}?${new URLSearchParams(params)}`;
   const res = await fetch(url, { method: 'POST', headers: authHeaders() });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Request failed (${res.status})`);
+  }
+  return res.status === 204 ? null : res.json().catch(() => null);
+}
+
+async function apiPut(path, params) {
+  const url = `${API_BASE}${path}?${new URLSearchParams(params)}`;
+  const res = await fetch(url, { method: 'PUT', headers: authHeaders() });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || `Request failed (${res.status})`);
@@ -89,6 +100,16 @@ async function apiRegister(username, password) {
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'Registration failed.'); }
   return res.json();
+}
+
+// ─── Busy Guard (prevents duplicate AI calls) ───────────────────────────────
+const AI_BUTTONS = ['btn-confirm-recurring', 'btn-add-recurring', 'btn-save-edit', 'btn-track-now'];
+
+function setActionBusy(busy) {
+  AI_BUTTONS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = busy;
+  });
 }
 
 // ─── Feedback Banner ──────────────────────────────────────────────────────────
@@ -226,6 +247,13 @@ function createHabitItem(habit) {
   xpEl.className   = 'xp-chip';
   xpEl.textContent = `+${habit.xp_reward ?? diff * 10} XP`;
 
+  // Edit button
+  const edit = document.createElement('button');
+  edit.className   = 'btn-edit-habit';
+  edit.textContent = '\u270E';
+  edit.title       = 'Edit habit';
+  edit.addEventListener('click', handleEditHabit);
+
   // Delete button
   const del = document.createElement('button');
   del.className   = 'btn-delete-habit';
@@ -233,7 +261,7 @@ function createHabitItem(habit) {
   del.title       = 'Delete habit';
   del.addEventListener('click', handleDeleteHabit);
 
-  li.append(diffEl, xpEl, del);
+  li.append(diffEl, xpEl, edit, del);
   return li;
 }
 
@@ -322,6 +350,59 @@ async function handleDeleteHabit(e) {
   }
 }
 
+function handleEditHabit(e) {
+  const li      = e.currentTarget.closest('.habit-item');
+  const habitId = parseInt(li.dataset.id, 10);
+  const habit   = state.habits.find(h => h.id === habitId);
+  if (!habit) return;
+  openEditModal(habit);
+}
+
+function openEditModal(habit) {
+  const overlay = document.getElementById('edit-modal-overlay');
+  document.getElementById('edit-habit-id').value    = habit.id;
+  document.getElementById('edit-habit-name').value   = habit.name;
+  document.getElementById('edit-habit-desc').value   = habit.description || '';
+
+  // Set frequency buttons
+  document.querySelectorAll('.edit-freq-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.freq === habit.frequency);
+  });
+  state.editFrequency = habit.frequency;
+
+  overlay.classList.remove('hidden');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal-overlay').classList.add('hidden');
+  state.editFrequency = null;
+}
+
+async function handleSaveEdit() {
+  const id          = parseInt(document.getElementById('edit-habit-id').value, 10);
+  const name        = document.getElementById('edit-habit-name').value.trim();
+  const description = document.getElementById('edit-habit-desc').value.trim();
+  const frequency   = state.editFrequency;
+
+  if (!name)      { showFeedback('Habit name is required.', 'error'); return; }
+  if (!frequency) { showFeedback('Please choose a frequency.', 'error'); return; }
+
+  setActionBusy(true);
+  try {
+    await apiPut('/editTask', { id, name, description, frequency });
+    state.habits  = await apiFetchHabits();
+    state.profile = await apiFetchProfile();
+    renderAllLists();
+    renderGamification();
+    closeEditModal();
+    showFeedback(`"${name}" updated!`, 'success');
+  } catch (err) {
+    showFeedback(err.message || 'Failed to update habit.', 'error');
+  } finally {
+    setActionBusy(false);
+  }
+}
+
 async function handleAddRecurring() {
   const name = document.getElementById('habit-name-input').value.trim();
   if (!name) { showFeedback('Please enter a habit name.', 'error'); return; }
@@ -329,6 +410,7 @@ async function handleAddRecurring() {
 
   const description  = document.getElementById('habit-desc-input').value.trim();
 
+  setActionBusy(true);
   try {
     await apiPost('/createTask', {
       name,
@@ -346,6 +428,8 @@ async function handleAddRecurring() {
     hideRecurringConfig();
   } catch (err) {
     showFeedback(err.message || 'Failed to add habit.', 'error');
+  } finally {
+    setActionBusy(false);
   }
 }
 
@@ -353,16 +437,10 @@ async function handleTrackNow() {
   const input = document.getElementById('habit-name-input');
   const name  = input.value.trim();
   if (!name) { showFeedback('Please enter a habit name.', 'error'); input.focus(); return; }
-  showOneTimeConfig();
-}
 
-async function handleConfirmOneTime() {
-  const name        = document.getElementById('habit-name-input').value.trim();
-  const description = document.getElementById('habit-desc-input').value.trim();
-
-  if (!name) { showFeedback('Please enter a habit name.', 'error'); return; }
-
+  setActionBusy(true);
   try {
+    const description = document.getElementById('habit-desc-input').value.trim();
     const result = await apiPost('/trackOneTime', { name, description });
     showXpToast(result.xp_reward);
     showFeedback(`"${name}" tracked! +${result.xp_reward} XP`, 'success');
@@ -381,9 +459,10 @@ async function handleConfirmOneTime() {
     document.getElementById('habit-name-input').value = '';
     document.getElementById('habit-desc-input').value = '';
     updateHabitButtons();
-    hideOneTimeConfig();
   } catch (err) {
     showFeedback(err.message || 'Failed to track one-time habit.', 'error');
+  } finally {
+    setActionBusy(false);
   }
 }
 
@@ -550,7 +629,6 @@ function initApp() {
   document.getElementById('btn-cancel-recurring').addEventListener('click', hideRecurringConfig);
 
   // One-time config
-  document.getElementById('btn-confirm-onetime').addEventListener('click', handleConfirmOneTime);
   document.getElementById('btn-cancel-onetime').addEventListener('click', () => {
     hideOneTimeConfig();
   });
@@ -561,6 +639,20 @@ function initApp() {
       document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.selectedFrequency = btn.dataset.freq;
+    })
+  );
+
+  // Edit modal
+  document.getElementById('btn-save-edit').addEventListener('click', handleSaveEdit);
+  document.getElementById('btn-cancel-edit').addEventListener('click', closeEditModal);
+  document.getElementById('edit-modal-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeEditModal();
+  });
+  document.querySelectorAll('.edit-freq-btn').forEach(btn =>
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.edit-freq-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.editFrequency = btn.dataset.freq;
     })
   );
 
