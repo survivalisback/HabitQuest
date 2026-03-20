@@ -72,13 +72,21 @@ async function apiFetchProfile() {
 }
 
 async function apiLogin(username, password) {
-  const res = await fetch(`${API_BASE}/login?${new URLSearchParams({ username, password })}`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'Login failed.'); }
   return res.json();
 }
 
 async function apiRegister(username, password) {
-  const res = await fetch(`${API_BASE}/register?${new URLSearchParams({ username, password })}`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'Registration failed.'); }
   return res.json();
 }

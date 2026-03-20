@@ -1,21 +1,26 @@
 import fastapi
 from fastapi import Depends, HTTPException
+from pydantic import BaseModel
 from dependencies import get_service
 from services.service import Service
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 habitRouter = fastapi.APIRouter()
 
 @habitRouter.post("/login")
-def login(username: str, password: str, service: Service = Depends(get_service)):
+def login(body: LoginRequest, service: Service = Depends(get_service)):
     try:
-        return service.login_user(username, password)
+        return service.login_user(body.username, body.password)
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 @habitRouter.post("/register")
-def register(username: str, password: str, service: Service = Depends(get_service)):
+def register(body: LoginRequest, service: Service = Depends(get_service)):
     try:
-        return service.register_user(username, password)
+        return service.register_user(body.username, body.password)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
