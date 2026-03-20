@@ -1,0 +1,271 @@
+<mxfile host="Electron" agent="draw.io" version="28.1.2">
+  <diagram name="Zustandsdiagramm" id="state-habitquest-v2">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ==================== INITIAL STATE ==================== -->
+        <mxCell id="s_init" value="" style="ellipse;fillColor=strokeColor;html=1;" vertex="1" parent="1">
+          <mxGeometry x="398" y="30" width="30" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== NICHT AUTHENTIFIZIERT ==================== -->
+        <mxCell id="s_unauth" value="Nicht authentifiziert" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="313" y="100" width="200" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Init → Nicht auth -->
+        <mxCell id="e_init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="s_init" target="s_unauth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_init" value="App gestartet" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="440" y="55" width="90" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== DASHBOARD ==================== -->
+        <mxCell id="s_dash" value="Dashboard" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="313" y="250" width="200" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Nicht auth → Dashboard (login) -->
+        <mxCell id="e_login" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="s_unauth" target="s_dash">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_login" value="login() / register()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="210" y="170" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Dashboard → Nicht auth (logout) -->
+        <mxCell id="e_logout" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_dash" target="s_unauth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_logout" value="logout() / 401" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="490" y="170" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== HABIT ERSTELLEN ==================== -->
+        <mxCell id="s_create" value="Habit erstellen" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="160" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Dashboard → Habit erstellen -->
+        <mxCell id="e_to_create" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_dash" target="s_create">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_to_create" value="addHabit()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="95" y="310" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Habit erstellen → Dashboard -->
+        <mxCell id="e_created" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_create" target="s_dash">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="420" />
+              <mxPoint x="50" y="295" />
+              <mxPoint x="313" y="295" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_created" value="erstellt" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="10" y="340" width="60" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== HABIT LÖSCHEN ==================== -->
+        <mxCell id="s_delete" value="Habit l&#246;schen" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="580" y="400" width="160" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Dashboard → Habit löschen -->
+        <mxCell id="e_to_delete" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_dash" target="s_delete">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_to_delete" value="deleteTask()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="630" y="310" width="90" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Habit löschen → Dashboard -->
+        <mxCell id="e_deleted" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_delete" target="s_dash">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="420" />
+              <mxPoint x="770" y="295" />
+              <mxPoint x="513" y="295" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_deleted" value="gel&#246;scht" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="745" y="340" width="60" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== HABIT ABSCHLIESSEN ==================== -->
+        <mxCell id="s_toggle" value="Habit abschlie&#223;en" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="325" y="400" width="176" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Dashboard → Habit abschließen -->
+        <mxCell id="e_to_toggle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_dash" target="s_toggle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_to_toggle" value="toggleCompletion()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="413" y="340" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== XP BERECHNEN ==================== -->
+        <mxCell id="s_xp" value="XP berechnen" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="338" y="520" width="150" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Habit abschließen → XP berechnen -->
+        <mxCell id="e_to_xp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="s_toggle" target="s_xp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_to_xp" value="Schwierigkeit &#215; 10 &#215; Frequenz" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="420" y="465" width="180" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== LEVEL PRÜFEN ==================== -->
+        <mxCell id="s_level" value="Level pr&#252;fen" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="338" y="640" width="150" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- XP → Level prüfen -->
+        <mxCell id="e_to_level" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="s_xp" target="s_level">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Level Up self-loop -->
+        <mxCell id="e_levelup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_level" target="s_level">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="640" />
+              <mxPoint x="520" y="670" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_levelup" value="[XP &#8805; Schwelle]&#xa;levelUp()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="520" y="637" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== STREAK AKTUALISIEREN ==================== -->
+        <mxCell id="s_streak" value="Streak aktualisieren" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="323" y="760" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Level → Streak -->
+        <mxCell id="e_to_streak" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="s_level" target="s_streak">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ACHIEVEMENTS PRÜFEN ==================== -->
+        <mxCell id="s_achieve" value="Achievements pr&#252;fen" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="323" y="880" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Streak → Achievements -->
+        <mxCell id="e_to_achieve" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="s_streak" target="s_achieve">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Achievement unlock self-loop -->
+        <mxCell id="e_unlock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_achieve" target="s_achieve">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="880" />
+              <mxPoint x="540" y="910" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_unlock" value="[Bedingung erf&#252;llt]&#xa;unlock()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="537" y="878" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== ACHIEVEMENTS → DASHBOARD (zurück) ==================== -->
+        <mxCell id="e_back_dash" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s_achieve" target="s_dash">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="900" />
+              <mxPoint x="250" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l_back_dash" value="renderGamification()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="115" y="570" width="140" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== HABIT LEBENSZYKLUS (Composite) ==================== -->
+        <mxCell id="comp_habit" value="Habit (pro Periode)" style="html=1;align=left;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=1;whiteSpace=wrap;fontSize=12;fontStyle=1;spacingLeft=5;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1000" width="420" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- Habit inner init -->
+        <mxCell id="h_init" value="" style="ellipse;fillColor=strokeColor;html=1;" vertex="1" parent="1">
+          <mxGeometry x="110" y="1050" width="25" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Habit: Offen -->
+        <mxCell id="h_open" value="Offen" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="180" y="1045" width="120" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Habit: Abgehakt -->
+        <mxCell id="h_done" value="Abgehakt" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1045" width="120" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- h_init → Offen -->
+        <mxCell id="eh0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="h_init" target="h_open">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Offen → Abgehakt -->
+        <mxCell id="eh1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="h_open" target="h_done">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="270" y="1110" />
+              <mxPoint x="390" y="1110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lh1" value="check()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="295" y="1090" width="60" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Abgehakt → Offen -->
+        <mxCell id="eh2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="h_done" target="h_open">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="1030" />
+              <mxPoint x="270" y="1030" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lh2" value="uncheck()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="290" y="1010" width="70" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Offen self-loop: periodReset -->
+        <mxCell id="eh3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="h_open" target="h_open">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="1045" />
+              <mxPoint x="160" y="1071" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lh3" value="periodReset()" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="100" y="1080" width="90" height="30" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
