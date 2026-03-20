@@ -88,6 +88,12 @@ class Service:
         self.habit_repository.update_habit(habit_id, habit, user_id)
 
     def delete_habit(self, user_id: int, habit_id: int):
+        habit = self.habit_repository.get_habit_by_id(habit_id, user_id)
+        if habit is not None:
+            is_completed = self.db.get_current_period_completion(habit_id, habit.frequency)
+            if is_completed:
+                self.xp_provider.revoke_xp(habit, self.db, user_id)
+        self.db.delete_habit_completions(habit_id)
         self.habit_repository.delete_habit(habit_id, user_id)
 
     def toggle_habit_completion(self, user_id: int, habit_id: int) -> dict:

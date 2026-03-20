@@ -44,6 +44,30 @@ class DBConnector:
         self.cursor.execute("DELETE FROM Habit WHERE habit_id = ? AND user_id = ?", (habit_id, user_id))
         self.connection.commit()
 
+    def get_current_period_completion(self, habit_id: int, frequency: str) -> bool:
+        period_start = self._resolve_period_start(frequency)
+        self.cursor.execute(
+            "SELECT completed FROM HabitCompleted WHERE habitID = ? AND period_start = ?",
+            (habit_id, period_start),
+        )
+        row = self.cursor.fetchone()
+        return row is not None and bool(row[0])
+
+    def delete_habit_completions(self, habit_id: int) -> None:
+        self.cursor.execute("DELETE FROM HabitCompleted WHERE habitID = ?", (habit_id,))
+        self.connection.commit()
+
+    def cleanup_expired_completions(self) -> int:
+        """Remove stale completion records (completed=0) for past periods."""
+        today = datetime.now().date().isoformat()
+        self.cursor.execute(
+            "DELETE FROM HabitCompleted WHERE completed = 0 AND period_start < ?",
+            (today,),
+        )
+        deleted = self.cursor.rowcount
+        self.connection.commit()
+        return deleted
+
     def update_habit(self, habit_id: int, habit: Habit, user_id: int) -> None:
         self.cursor.execute("""
         UPDATE Habit

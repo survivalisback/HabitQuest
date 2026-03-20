@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class AiClient:
                 messages=[{"role": "user", "content": prompt}],
             )
             text = response.content[0].text.strip()
-            data = json.loads(text)
+            data = self._parse_json_response(text)
             xp = int(data["xp"])
             # Clamp to allowed range
             lower = int(static_xp * 0.5)
@@ -47,3 +48,24 @@ class AiClient:
         except Exception as e:
             logger.warning("AI XP evaluation failed: %s", e)
             return None
+
+    @staticmethod
+    def _parse_json_response(text: str) -> dict:
+        # First try direct parse for strict JSON output.
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        # Handle fenced markdown output like ```json ... ```.
+        fenced = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", text, flags=re.IGNORECASE)
+        if fenced:
+            return json.loads(fenced.group(1))
+
+        # Last resort: extract the first JSON object block.
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            return json.loads(text[start : end + 1])
+
+        raise json.JSONDecodeError("No JSON object found in AI response.", text, 0)
