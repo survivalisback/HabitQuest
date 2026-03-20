@@ -51,3 +51,12 @@ class HabitRepository:
 
     def get_habits_for_user(self, user_id: int) -> list[Habit]:
         return self.connection.get_habits(user_id)
+
+    def get_current_period_completion(self, habit_id: int, frequency: str) -> bool:
+        return self.connection.get_current_period_completion(habit_id, frequency)
+
+    def delete_completions(self, habit_id: int) -> None:
+        self.connection.delete_habit_completions(habit_id)
+
+    def get_all_streaks(self, user_id: int) -> dict:
+        return self.connection.get_all_habit_streaks(user_id)
