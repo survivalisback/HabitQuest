@@ -25,9 +25,9 @@
         <input id="login-password" type="password" placeholder="Enter password" autocomplete="current-password" />
       </div>
 
-      <button id="btn-login" class="btn-primary full-width">Sign in</button>
+      <button id="btn-login" class="btn-primary full-width" disabled>Sign in</button>
       <div class="login-divider"><span>or</span></div>
-      <button id="btn-register" class="btn-outline full-width">Create account</button>
+      <button id="btn-register" class="btn-outline full-width" disabled>Create account</button>
     </div>
   </div>
 
@@ -54,9 +54,11 @@
             placeholder="Enter a habit name…"
             autocomplete="off"
           />
+          <textarea id="habit-desc-input" placeholder="Description (optional — helps AI determine XP)" rows="2"></textarea>
+
           <div id="input-actions">
-            <button id="btn-track-now">Track Now</button>
-            <button id="btn-add-recurring">Add Recurring</button>
+            <button id="btn-track-now" disabled>Track Now</button>
+            <button id="btn-add-recurring" disabled>Add Recurring</button>
           </div>
 
           <div id="recurring-config" class="hidden">
@@ -68,10 +70,6 @@
                 <button class="freq-btn" data-freq="monthly">Monthly</button>
               </div>
             </div>
-            <div class="config-row">
-              <span class="config-label">Description</span>
-              <textarea id="habit-desc-input" placeholder="Describe your habit (helps AI determine XP)" rows="2"></textarea>
-            </div>
             <div id="recurring-actions">
               <button id="btn-confirm-recurring">Add Habit</button>
               <button id="btn-cancel-recurring">Cancel</button>
@@ -79,10 +77,6 @@
           </div>
 
           <div id="one-time-config" class="hidden">
-            <div class="config-row">
-              <span class="config-label">Description</span>
-              <textarea id="onetime-desc-input" placeholder="Describe this one-time task" rows="2"></textarea>
-            </div>
             <div id="onetime-actions">
               <button id="btn-confirm-onetime">Track It</button>
               <button id="btn-cancel-onetime">Cancel</button>
@@ -197,8 +191,8 @@
     </main>
   </div>
 
-  <!-- XP Toast -->
-  <div id="xp-toast" class="hidden"></div>
+  <!-- XP Toasts -->
+  <div id="xp-toast-container"></div>
 
   <script src="app.js"></script>
 </body>

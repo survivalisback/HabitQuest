@@ -95,20 +95,24 @@ function showFeedback(msg, type = 'success') {
 }
 
 // ─── XP Toast ─────────────────────────────────────────────────────────────────
-let toastTimer = null;
 function showXpToast(xp, bonusXp) {
-  const el = document.getElementById('xp-toast');
+  const container = document.getElementById('xp-toast-container');
+  const el = document.createElement('div');
+  el.className = 'xp-toast';
+
   let text = `+${xp} XP`;
   if (bonusXp && bonusXp > 0) {
     text += ` (+${bonusXp} streak bonus)`;
   }
   el.textContent = text;
-  el.className = 'toast-in';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    el.className = 'toast-out';
-    setTimeout(() => { el.className = 'hidden'; }, 350);
-  }, 1600);
+
+  container.appendChild(el);
+
+  // Fade out then remove
+  setTimeout(() => {
+    el.classList.add('toast-out');
+    setTimeout(() => el.remove(), 600);
+  }, 2000);
 }
 
 // ─── Gamification Render ──────────────────────────────────────────────────────
@@ -166,6 +170,7 @@ function createHabitItem(habit) {
   const label = document.createElement('label');
   const cb    = document.createElement('input');
   cb.type = 'checkbox';
+  cb.checked = !!habit.completed;
   cb.addEventListener('change', handleHabitCheck);
 
   const nameContainer = document.createElement('span');
@@ -278,13 +283,14 @@ async function handleHabitCheck(e) {
       }
     }
 
-    // Update streak on the habit in state
+    // Update completion and streak on the habit in state
+    habit.completed = !!result.completed;
     if (result.streak !== undefined) {
       habit.streak = result.streak;
     }
 
-    li.classList.add('completing');
-    setTimeout(() => { renderAllLists(); renderGamification(); }, 420);
+    renderAllLists();
+    renderGamification();
   } catch (err) {
     cb.disabled = false;
     cb.checked  = false;
@@ -327,6 +333,8 @@ async function handleAddRecurring() {
     renderGamification();
     showFeedback(`"${name}" added as ${state.selectedFrequency} habit!`, 'success');
     document.getElementById('habit-name-input').value = '';
+    document.getElementById('habit-desc-input').value = '';
+    updateHabitButtons();
     hideRecurringConfig();
   } catch (err) {
     showFeedback(err.message || 'Failed to add habit.', 'error');
@@ -342,7 +350,7 @@ async function handleTrackNow() {
 
 async function handleConfirmOneTime() {
   const name        = document.getElementById('habit-name-input').value.trim();
-  const description = document.getElementById('onetime-desc-input').value.trim();
+  const description = document.getElementById('habit-desc-input').value.trim();
 
   if (!name) { showFeedback('Please enter a habit name.', 'error'); return; }
 
@@ -363,6 +371,8 @@ async function handleConfirmOneTime() {
 
     renderGamification();
     document.getElementById('habit-name-input').value = '';
+    document.getElementById('habit-desc-input').value = '';
+    updateHabitButtons();
     hideOneTimeConfig();
   } catch (err) {
     showFeedback(err.message || 'Failed to track one-time habit.', 'error');
@@ -375,20 +385,17 @@ function showRecurringConfig() {
   document.getElementById('recurring-config').classList.remove('hidden');
   document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
   state.selectedFrequency  = null;
-  document.getElementById('habit-desc-input').value = '';
 }
 
 function hideRecurringConfig() {
   document.getElementById('recurring-config').classList.add('hidden');
   state.selectedFrequency  = null;
-  document.getElementById('habit-desc-input').value = '';
 }
 
 // ─── One-Time Config UI ──────────────────────────────────────────────────────
 function showOneTimeConfig() {
   hideRecurringConfig();
   document.getElementById('one-time-config').classList.remove('hidden');
-  document.getElementById('onetime-desc-input').value = '';
 }
 
 function hideOneTimeConfig() {
@@ -413,8 +420,12 @@ function setLoginError(msg) {
 }
 
 function setLoginBusy(busy) {
-  document.getElementById('btn-login').disabled    = busy;
-  document.getElementById('btn-register').disabled = busy;
+  if (busy) {
+    document.getElementById('btn-login').disabled    = true;
+    document.getElementById('btn-register').disabled = true;
+  } else {
+    updateLoginButtons();
+  }
 }
 
 async function handleLogin() {
@@ -471,6 +482,21 @@ async function loadApp() {
   renderGamification();
 }
 
+// ─── Button State Helpers ─────────────────────────────────────────────────────
+function updateLoginButtons() {
+  const hasUser = document.getElementById('login-username').value.trim().length > 0;
+  const hasPass = document.getElementById('login-password').value.length > 0;
+  const enabled = hasUser && hasPass;
+  document.getElementById('btn-login').disabled = !enabled;
+  document.getElementById('btn-register').disabled = !enabled;
+}
+
+function updateHabitButtons() {
+  const hasName = document.getElementById('habit-name-input').value.trim().length > 0;
+  document.getElementById('btn-track-now').disabled = !hasName;
+  document.getElementById('btn-add-recurring').disabled = !hasName;
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 function initApp() {
   // Auth check
@@ -490,6 +516,9 @@ function initApp() {
   document.getElementById('login-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleLogin();
   });
+  document.getElementById('login-username').addEventListener('input', updateLoginButtons);
+  document.getElementById('login-password').addEventListener('input', updateLoginButtons);
+  updateLoginButtons();
 
   // Logout
   document.getElementById('btn-logout').addEventListener('click', () => {
@@ -526,6 +555,10 @@ function initApp() {
       state.selectedFrequency = btn.dataset.freq;
     })
   );
+
+  // Habit name validation
+  document.getElementById('habit-name-input').addEventListener('input', updateHabitButtons);
+  updateHabitButtons();
 
   // Enter key in habit input
   document.getElementById('habit-name-input').addEventListener('keydown', e => {

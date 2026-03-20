@@ -318,6 +318,16 @@ header h1 {
 #btn-track-now:active,
 #btn-add-recurring:active { transform: scale(0.97); }
 
+#btn-track-now:disabled,
+#btn-add-recurring:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+#btn-track-now:disabled:hover { background: var(--accent-left); box-shadow: none; }
+#btn-add-recurring:disabled:hover { background: transparent; }
+
 /* ─── Recurring Config ──────────────────────────────────────────────────────── */
 #recurring-config {
   display: flex;
@@ -419,8 +429,7 @@ header h1 {
 #btn-cancel-recurring:hover { color: var(--text-primary); }
 
 /* Description textarea */
-#habit-desc-input,
-#onetime-desc-input {
+#habit-desc-input {
   width: 100%;
   background: var(--bg-body);
   border: 1px solid var(--border-bright);
@@ -435,11 +444,9 @@ header h1 {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-#habit-desc-input::placeholder,
-#onetime-desc-input::placeholder { color: var(--text-muted); }
+#habit-desc-input::placeholder { color: var(--text-muted); }
 
-#habit-desc-input:focus,
-#onetime-desc-input:focus {
+#habit-desc-input:focus {
   border-color: var(--accent-left);
   box-shadow: 0 0 0 3px rgba(79,70,229,0.2);
 }
@@ -595,15 +602,17 @@ header h1 {
 .habit-item input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 1.0625rem;
-  height: 1.0625rem;
+  width: 1.125rem;
+  height: 1.125rem;
   border: 1.5px solid var(--border-bright);
   border-radius: 4px;
   background: var(--bg-panel);
   cursor: pointer;
-  position: relative;
   flex-shrink: 0;
   transition: background 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .habit-item input[type="checkbox"]:hover   { border-color: var(--accent-left); }
@@ -612,15 +621,15 @@ header h1 {
   border-color: var(--accent-left);
 }
 
-.habit-item input[type="checkbox"]:checked::before {
+.habit-item input[type="checkbox"]:checked::after {
   content: '';
-  position: absolute;
-  top: 1px; left: 3.5px;
-  width: 5px; height: 8px;
+  display: block;
+  width: 5px;
+  height: 9px;
   border: 2px solid #fff;
   border-top: none;
   border-left: none;
-  transform: rotate(45deg);
+  transform: rotate(45deg) translateY(-1px);
 }
 
 .habit-name {
@@ -934,30 +943,47 @@ header h1 {
   line-height: 1.2;
 }
 
-/* ─── XP Toast ──────────────────────────────────────────────────────────────── */
-#xp-toast {
+/* ─── XP Toasts ─────────────────────────────────────────────────────────────── */
+#xp-toast-container {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  background: linear-gradient(135deg, var(--accent-right), #f97316);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 800;
-  padding: 0.625rem 1.25rem;
-  border-radius: 999px;
-  box-shadow: 0 6px 24px rgba(245,158,11,0.45);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
   pointer-events: none;
   z-index: 200;
+}
+
+.xp-toast {
+  background: linear-gradient(135deg, var(--accent-right), #f97316);
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 28px rgba(245,158,11,0.5);
+  white-space: nowrap;
+  max-height: 4rem;
+  overflow: hidden;
+  animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.xp-toast.toast-out {
+  animation: toastFade 0.3s ease forwards, toastCollapse 0.3s 0.25s ease forwards;
 }
 
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(12px) scale(0.9); }
   to   { opacity: 1; transform: translateY(0)    scale(1);   }
 }
-@keyframes toastOut {
+
+@keyframes toastFade {
   from { opacity: 1; transform: translateY(0)    scale(1);   }
-  to   { opacity: 0; transform: translateY(-8px) scale(0.95); }
+  to   { opacity: 0; transform: translateY(-8px) scale(0.85); }
 }
 
-#xp-toast.toast-in  { animation: toastIn  0.28s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-#xp-toast.toast-out { animation: toastOut 0.32s ease forwards; }
+@keyframes toastCollapse {
+  from { max-height: 4rem; padding: 0.75rem 1.5rem; margin: 0; }
+  to   { max-height: 0;    padding: 0 1.5rem;       margin: 0; }
+}
