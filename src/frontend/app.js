@@ -2,97 +2,16 @@ const API_BASE = 'http://localhost:8000';
 
 const STORAGE_TOKEN      = 'habitquest_token';
 const STORAGE_USERNAME   = 'habitquest_username';
-const STORAGE_GAMIF_PFX  = 'habitquest_gam_';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const state = {
   token:    null,
   username: null,
   habits:   [],
-  gamification: {
-    totalXp:          0,
-    totalCompletions: 0,
-    completionDates:  [],   // one ISO-date entry per completion event
-    usedFrequencies:  [],
-  },
+  profile:  null,  // fetched from backend
   selectedFrequency: null,
-  selectedDifficulty: null,
+  editFrequency: null,
 };
-
-// ─── XP / Level System ───────────────────────────────────────────────────────
-// Mirrors the backend's Level logic (difficulty * 10 * freq_multiplier)
-// Level thresholds: cumulative total XP required to reach each level
-const XP_THRESHOLDS = [0, 100, 250, 500, 900, 1500, 2500, 4000, 6000, 9000, 14000];
-
-function getLevelInfo(totalXp) {
-  let level = 1;
-  for (let i = 1; i < XP_THRESHOLDS.length; i++) {
-    if (totalXp >= XP_THRESHOLDS[i]) {
-      level = i + 1;
-    } else {
-      const xpInLevel = totalXp - XP_THRESHOLDS[i - 1];
-      const xpNeeded  = XP_THRESHOLDS[i] - XP_THRESHOLDS[i - 1];
-      return { level, xpInLevel, xpNeeded };
-    }
-  }
-  // Max level
-  const last = XP_THRESHOLDS[XP_THRESHOLDS.length - 1];
-  return { level, xpInLevel: totalXp - last, xpNeeded: 5000 };
-}
-
-const TITLES = [
-  'Beginner', 'Apprentice', 'Journeyman', 'Adept',
-  'Specialist', 'Expert', 'Master', 'Grandmaster', 'Legend', 'Mythic',
-];
-
-function getLevelTitle(level) {
-  return TITLES[Math.min(level - 1, TITLES.length - 1)];
-}
-
-// ─── Streak Calculation ───────────────────────────────────────────────────────
-function calculateStreak(dates) {
-  if (!dates || dates.length === 0) return 0;
-  const unique = [...new Set(dates)].sort().reverse(); // newest first
-  const today  = new Date().toISOString().slice(0, 10);
-  let streak   = 0;
-  const cursor = new Date(today);
-
-  for (const d of unique) {
-    const expected = cursor.toISOString().slice(0, 10);
-    if (d === expected) {
-      streak++;
-      cursor.setDate(cursor.getDate() - 1);
-    } else if (d < expected) {
-      break; // gap found
-    }
-  }
-  return streak;
-}
-
-// ─── Gamification Persistence ─────────────────────────────────────────────────
-function gamifKey() {
-  return STORAGE_GAMIF_PFX + (state.username || 'anon');
-}
-
-function loadGamification() {
-  try {
-    const raw = localStorage.getItem(gamifKey());
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    // Prune completion dates older than 90 days to keep storage lean
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 90);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
-    parsed.completionDates = (parsed.completionDates || []).filter(d => d >= cutoffStr);
-    Object.assign(state.gamification, parsed);
-  } catch { /* ignore */ }
-}
-
-function saveGamification() {
-  try {
-    localStorage.setItem(gamifKey(), JSON.stringify(state.gamification));
-  } catch { /* ignore */ }
-}
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 function loadAuth() {
@@ -130,6 +49,16 @@ async function apiPost(path, params) {
   return res.status === 204 ? null : res.json().catch(() => null);
 }
 
+async function apiPut(path, params) {
+  const url = `${API_BASE}${path}?${new URLSearchParams(params)}`;
+  const res = await fetch(url, { method: 'PUT', headers: authHeaders() });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Request failed (${res.status})`);
+  }
+  return res.status === 204 ? null : res.json().catch(() => null);
+}
+
 async function apiDelete(path, params) {
   const url = `${API_BASE}${path}?${new URLSearchParams(params)}`;
   const res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
@@ -146,16 +75,41 @@ async function apiFetchHabits() {
   return res.json();
 }
 
+async function apiFetchProfile() {
+  const res = await fetch(`${API_BASE}/profile`, { headers: authHeaders() });
+  if (res.status === 401) { clearAuth(); showLoginOverlay(); throw new Error('Session expired.'); }
+  if (!res.ok) throw new Error('Failed to load profile.');
+  return res.json();
+}
+
 async function apiLogin(username, password) {
-  const res = await fetch(`${API_BASE}/login?${new URLSearchParams({ username, password })}`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'Login failed.'); }
   return res.json();
 }
 
 async function apiRegister(username, password) {
-  const res = await fetch(`${API_BASE}/register?${new URLSearchParams({ username, password })}`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'Registration failed.'); }
   return res.json();
+}
+
+// ─── Busy Guard (prevents duplicate AI calls) ───────────────────────────────
+const AI_BUTTONS = ['btn-confirm-recurring', 'btn-add-recurring', 'btn-save-edit', 'btn-track-now'];
+
+function setActionBusy(busy) {
+  AI_BUTTONS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = busy;
+  });
 }
 
 // ─── Feedback Banner ──────────────────────────────────────────────────────────
@@ -170,47 +124,65 @@ function showFeedback(msg, type = 'success') {
 }
 
 // ─── XP Toast ─────────────────────────────────────────────────────────────────
-let toastTimer = null;
-function showXpToast(xp) {
-  const el = document.getElementById('xp-toast');
-  el.textContent = `+${xp} XP`;
-  el.className = 'toast-in';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    el.className = 'toast-out';
-    setTimeout(() => { el.className = 'hidden'; }, 350);
-  }, 1600);
+function showXpToast(xp, bonusXp) {
+  const container = document.getElementById('xp-toast-container');
+  const el = document.createElement('div');
+  el.className = 'xp-toast';
+
+  let text = `+${xp} XP`;
+  if (bonusXp && bonusXp > 0) {
+    text += ` (+${bonusXp} streak bonus)`;
+  }
+  el.textContent = text;
+
+  container.appendChild(el);
+
+  // Fade out then remove
+  setTimeout(() => {
+    el.classList.add('toast-out');
+    setTimeout(() => el.remove(), 600);
+  }, 2000);
 }
 
 // ─── Gamification Render ──────────────────────────────────────────────────────
 function renderGamification() {
-  const { totalXp, totalCompletions, completionDates, usedFrequencies } = state.gamification;
-  const { level, xpInLevel, xpNeeded } = getLevelInfo(totalXp);
-  const streak = calculateStreak(completionDates);
-  const today  = new Date().toISOString().slice(0, 10);
+  const profile = state.profile;
+  if (!profile) return;
+
+  const { level_info, total_xp, total_completions } = profile;
+  const { level, title, xp_in_level, xp_needed } = level_info;
 
   document.getElementById('level-number').textContent    = level;
   document.getElementById('player-name').textContent     = state.username || 'Adventurer';
-  document.getElementById('player-title').textContent    = getLevelTitle(level);
-  document.getElementById('xp-text').textContent         = `${xpInLevel} / ${xpNeeded} XP`;
-  document.getElementById('xp-bar-fill').style.width     = `${Math.min(100, (xpInLevel / xpNeeded) * 100)}%`;
-  document.getElementById('streak-value').textContent    = streak;
-  document.getElementById('completions-value').textContent = totalCompletions;
+  document.getElementById('player-title').textContent    = title;
+  document.getElementById('xp-text').textContent         = `${xp_in_level} / ${xp_needed} XP`;
+  document.getElementById('xp-bar-fill').style.width     = `${Math.min(100, (xp_in_level / xp_needed) * 100)}%`;
 
-  // Today's progress (daily habits done today vs total daily habits)
-  const dailyTotal   = state.habits.filter(h => h.frequency === 'daily').length;
-  const todayCount   = completionDates.filter(d => d === today).length;
-  document.getElementById('today-text').textContent      = `${Math.min(todayCount, dailyTotal)} / ${dailyTotal}`;
+  // Best streak from habits
+  const bestStreak = state.habits.reduce((max, h) => Math.max(max, h.streak || 0), 0);
+  document.getElementById('streak-value').textContent    = bestStreak;
+  document.getElementById('completions-value').textContent = total_completions;
+
+  // Today's progress (daily habits with streaks covering today)
+  const dailyHabits = state.habits.filter(h => h.frequency === 'daily');
+  const dailyTotal  = dailyHabits.length;
+  // We approximate today's completions by counting dailies with streak > 0
+  // (a streak > 0 means the current period is completed)
+  const todayCount  = dailyHabits.filter(h => (h.streak || 0) > 0).length;
+  document.getElementById('today-text').textContent      = `${todayCount} / ${dailyTotal}`;
   const todayPct = dailyTotal > 0 ? Math.min(100, (todayCount / dailyTotal) * 100) : 0;
   document.getElementById('today-bar-fill').style.width  = `${todayPct}%`;
 
+  // Used frequencies
+  const usedFreqs = [...new Set(state.habits.map(h => h.frequency))];
+
   // Achievements
-  setAchievement('ach-first-step',   totalCompletions >= 1);
-  setAchievement('ach-week-warrior', streak >= 7);
+  setAchievement('ach-first-step',   total_completions >= 1);
+  setAchievement('ach-week-warrior', bestStreak >= 7);
   setAchievement('ach-habit-master', state.habits.length >= 10);
-  setAchievement('ach-consistent',   streak >= 30);
-  setAchievement('ach-explorer',     ['daily', 'weekly', 'monthly'].every(f => usedFrequencies.includes(f)));
-  setAchievement('ach-legend',       totalCompletions >= 100);
+  setAchievement('ach-consistent',   bestStreak >= 30);
+  setAchievement('ach-explorer',     ['daily', 'weekly', 'monthly'].every(f => usedFreqs.includes(f)));
+  setAchievement('ach-legend',       total_completions >= 100);
 }
 
 function setAchievement(id, unlocked) {
@@ -227,13 +199,38 @@ function createHabitItem(habit) {
   const label = document.createElement('label');
   const cb    = document.createElement('input');
   cb.type = 'checkbox';
+  cb.checked = !!habit.completed;
   cb.addEventListener('change', handleHabitCheck);
+
+  const nameContainer = document.createElement('span');
+  nameContainer.className = 'habit-name-container';
 
   const nameSpan = document.createElement('span');
   nameSpan.className   = 'habit-name';
   nameSpan.textContent = habit.name;
   nameSpan.title       = habit.name;
-  label.append(cb, nameSpan);
+  nameContainer.appendChild(nameSpan);
+
+  if (habit.description) {
+    const descSpan = document.createElement('span');
+    descSpan.className   = 'habit-desc';
+    descSpan.textContent = habit.description;
+    descSpan.title       = habit.description;
+    nameContainer.appendChild(descSpan);
+  }
+
+  label.append(cb, nameContainer);
+
+  // Streak badge
+  if (habit.streak && habit.streak > 0) {
+    const streakEl = document.createElement('span');
+    streakEl.className   = 'streak-badge';
+    streakEl.textContent = `\u{1F525}${habit.streak}`;
+    li.appendChild(label);
+    li.appendChild(streakEl);
+  } else {
+    li.appendChild(label);
+  }
 
   // Difficulty dots
   const diff    = Math.max(1, Math.min(5, habit.difficulty || 1));
@@ -250,14 +247,21 @@ function createHabitItem(habit) {
   xpEl.className   = 'xp-chip';
   xpEl.textContent = `+${habit.xp_reward ?? diff * 10} XP`;
 
+  // Edit button
+  const edit = document.createElement('button');
+  edit.className   = 'btn-edit-habit';
+  edit.textContent = '\u270E';
+  edit.title       = 'Edit habit';
+  edit.addEventListener('click', handleEditHabit);
+
   // Delete button
   const del = document.createElement('button');
   del.className   = 'btn-delete-habit';
-  del.textContent = '×';
+  del.textContent = '\u00d7';
   del.title       = 'Delete habit';
   del.addEventListener('click', handleDeleteHabit);
 
-  li.append(label, diffEl, xpEl, del);
+  li.append(diffEl, xpEl, edit, del);
   return li;
 }
 
@@ -292,31 +296,37 @@ async function handleHabitCheck(e) {
 
   try {
     const result = await apiPost('/toggleTaskCompletion', { id: habitId });
-    const xp     = habit.xp_reward ?? (habit.difficulty * 10);
-    const today  = new Date().toISOString().slice(0, 10);
-    const g      = state.gamification;
 
     if (result.completed) {
-      g.totalXp          += xp;
-      g.totalCompletions += 1;
-      g.completionDates.push(today);
-      if (!g.usedFrequencies.includes(habit.frequency)) {
-        g.usedFrequencies.push(habit.frequency);
-      }
-      saveGamification();
-      showXpToast(xp);
-      showFeedback(`"${habit.name}" completed! +${xp} XP`, 'success');
+      const totalXp = result.xp_reward + (result.streak_bonus_xp || 0);
+      showXpToast(result.xp_reward, result.streak_bonus_xp);
+      showFeedback(`"${habit.name}" completed! +${totalXp} XP`, 'success');
     } else {
-      g.totalXp          = Math.max(0, g.totalXp - xp);
-      g.totalCompletions = Math.max(0, g.totalCompletions - 1);
-      const idx = g.completionDates.lastIndexOf(today);
-      if (idx !== -1) g.completionDates.splice(idx, 1);
-      saveGamification();
       showFeedback(`"${habit.name}" unmarked.`, 'success');
     }
 
-    li.classList.add('completing');
-    setTimeout(() => { renderAllLists(); renderGamification(); }, 420);
+    // Update profile from response
+    if (result.level_info) {
+      state.profile = {
+        ...state.profile,
+        total_xp: result.level_info.total_xp,
+        level_info: result.level_info,
+      };
+      if (result.completed) {
+        state.profile.total_completions = (state.profile.total_completions || 0) + 1;
+      } else {
+        state.profile.total_completions = Math.max(0, (state.profile.total_completions || 0) - 1);
+      }
+    }
+
+    // Update completion and streak on the habit in state
+    habit.completed = !!result.completed;
+    if (result.streak !== undefined) {
+      habit.streak = result.streak;
+    }
+
+    renderAllLists();
+    renderGamification();
   } catch (err) {
     cb.disabled = false;
     cb.checked  = false;
@@ -340,52 +350,143 @@ async function handleDeleteHabit(e) {
   }
 }
 
+function handleEditHabit(e) {
+  const li      = e.currentTarget.closest('.habit-item');
+  const habitId = parseInt(li.dataset.id, 10);
+  const habit   = state.habits.find(h => h.id === habitId);
+  if (!habit) return;
+  openEditModal(habit);
+}
+
+function openEditModal(habit) {
+  const overlay = document.getElementById('edit-modal-overlay');
+  document.getElementById('edit-habit-id').value    = habit.id;
+  document.getElementById('edit-habit-name').value   = habit.name;
+  document.getElementById('edit-habit-desc').value   = habit.description || '';
+
+  // Set frequency buttons
+  document.querySelectorAll('.edit-freq-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.freq === habit.frequency);
+  });
+  state.editFrequency = habit.frequency;
+
+  overlay.classList.remove('hidden');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal-overlay').classList.add('hidden');
+  state.editFrequency = null;
+}
+
+async function handleSaveEdit() {
+  const id          = parseInt(document.getElementById('edit-habit-id').value, 10);
+  const name        = document.getElementById('edit-habit-name').value.trim();
+  const description = document.getElementById('edit-habit-desc').value.trim();
+  const frequency   = state.editFrequency;
+
+  if (!name)      { showFeedback('Habit name is required.', 'error'); return; }
+  if (!frequency) { showFeedback('Please choose a frequency.', 'error'); return; }
+
+  setActionBusy(true);
+  try {
+    await apiPut('/editTask', { id, name, description, frequency });
+    state.habits  = await apiFetchHabits();
+    state.profile = await apiFetchProfile();
+    renderAllLists();
+    renderGamification();
+    closeEditModal();
+    showFeedback(`"${name}" updated!`, 'success');
+  } catch (err) {
+    showFeedback(err.message || 'Failed to update habit.', 'error');
+  } finally {
+    setActionBusy(false);
+  }
+}
+
 async function handleAddRecurring() {
   const name = document.getElementById('habit-name-input').value.trim();
   if (!name) { showFeedback('Please enter a habit name.', 'error'); return; }
   if (!state.selectedFrequency) { showFeedback('Please choose a frequency.', 'error'); return; }
 
-  const difficulty = state.selectedDifficulty ?? 1;
+  const description  = document.getElementById('habit-desc-input').value.trim();
 
+  setActionBusy(true);
   try {
     await apiPost('/createTask', {
       name,
-      description: '',
+      description,
       frequency:   state.selectedFrequency,
-      difficulty:  difficulty,
     });
     state.habits = await apiFetchHabits();
+    state.profile = await apiFetchProfile();
     renderAllLists();
     renderGamification();
     showFeedback(`"${name}" added as ${state.selectedFrequency} habit!`, 'success');
     document.getElementById('habit-name-input').value = '';
+    document.getElementById('habit-desc-input').value = '';
+    updateHabitButtons();
     hideRecurringConfig();
   } catch (err) {
     showFeedback(err.message || 'Failed to add habit.', 'error');
+  } finally {
+    setActionBusy(false);
   }
 }
 
-function handleTrackNow() {
+async function handleTrackNow() {
   const input = document.getElementById('habit-name-input');
   const name  = input.value.trim();
   if (!name) { showFeedback('Please enter a habit name.', 'error'); input.focus(); return; }
-  // "Track now" = one-off, no backend persistence for one-time habits yet
-  showFeedback(`"${name}" tracked!`, 'success');
-  input.value = '';
+
+  setActionBusy(true);
+  try {
+    const description = document.getElementById('habit-desc-input').value.trim();
+    const result = await apiPost('/trackOneTime', { name, description });
+    showXpToast(result.xp_reward);
+    showFeedback(`"${name}" tracked! +${result.xp_reward} XP`, 'success');
+
+    // Update profile
+    if (result.level_info) {
+      state.profile = {
+        ...state.profile,
+        total_xp: result.level_info.total_xp,
+        level_info: result.level_info,
+        total_completions: (state.profile?.total_completions || 0) + 1,
+      };
+    }
+
+    renderGamification();
+    document.getElementById('habit-name-input').value = '';
+    document.getElementById('habit-desc-input').value = '';
+    updateHabitButtons();
+  } catch (err) {
+    showFeedback(err.message || 'Failed to track one-time habit.', 'error');
+  } finally {
+    setActionBusy(false);
+  }
 }
 
 // ─── Recurring Config UI ──────────────────────────────────────────────────────
 function showRecurringConfig() {
+  hideOneTimeConfig();
   document.getElementById('recurring-config').classList.remove('hidden');
-  document.querySelectorAll('.freq-btn, .diff-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
   state.selectedFrequency  = null;
-  state.selectedDifficulty = null;
 }
 
 function hideRecurringConfig() {
   document.getElementById('recurring-config').classList.add('hidden');
   state.selectedFrequency  = null;
-  state.selectedDifficulty = null;
+}
+
+// ─── One-Time Config UI ──────────────────────────────────────────────────────
+function showOneTimeConfig() {
+  hideRecurringConfig();
+  document.getElementById('one-time-config').classList.remove('hidden');
+}
+
+function hideOneTimeConfig() {
+  document.getElementById('one-time-config').classList.add('hidden');
 }
 
 // ─── Login Overlay ────────────────────────────────────────────────────────────
@@ -406,8 +507,12 @@ function setLoginError(msg) {
 }
 
 function setLoginBusy(busy) {
-  document.getElementById('btn-login').disabled    = busy;
-  document.getElementById('btn-register').disabled = busy;
+  if (busy) {
+    document.getElementById('btn-login').disabled    = true;
+    document.getElementById('btn-register').disabled = true;
+  } else {
+    updateLoginButtons();
+  }
 }
 
 async function handleLogin() {
@@ -449,20 +554,34 @@ async function handleRegister() {
 
 // ─── App Bootstrap ────────────────────────────────────────────────────────────
 async function loadApp() {
-  state.gamification = {
-    totalXp: 0, totalCompletions: 0, completionDates: [], usedFrequencies: [],
-  };
-  loadGamification();
   document.getElementById('header-username').textContent = state.username || '';
 
   try {
-    state.habits = await apiFetchHabits();
+    const [habits, profile] = await Promise.all([apiFetchHabits(), apiFetchProfile()]);
+    state.habits  = habits;
+    state.profile = profile;
   } catch {
-    state.habits = [];
+    state.habits  = [];
+    state.profile = { total_xp: 0, total_completions: 0, level_info: { level: 1, title: 'Beginner', xp_in_level: 0, xp_needed: 100, total_xp: 0 } };
   }
 
   renderAllLists();
   renderGamification();
+}
+
+// ─── Button State Helpers ─────────────────────────────────────────────────────
+function updateLoginButtons() {
+  const hasUser = document.getElementById('login-username').value.trim().length > 0;
+  const hasPass = document.getElementById('login-password').value.length > 0;
+  const enabled = hasUser && hasPass;
+  document.getElementById('btn-login').disabled = !enabled;
+  document.getElementById('btn-register').disabled = !enabled;
+}
+
+function updateHabitButtons() {
+  const hasName = document.getElementById('habit-name-input').value.trim().length > 0;
+  document.getElementById('btn-track-now').disabled = !hasName;
+  document.getElementById('btn-add-recurring').disabled = !hasName;
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -484,12 +603,15 @@ function initApp() {
   document.getElementById('login-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleLogin();
   });
+  document.getElementById('login-username').addEventListener('input', updateLoginButtons);
+  document.getElementById('login-password').addEventListener('input', updateLoginButtons);
+  updateLoginButtons();
 
   // Logout
   document.getElementById('btn-logout').addEventListener('click', () => {
     clearAuth();
-    state.habits       = [];
-    state.gamification = { totalXp: 0, totalCompletions: 0, completionDates: [], usedFrequencies: [] };
+    state.habits  = [];
+    state.profile = null;
     showLoginOverlay();
   });
 
@@ -506,6 +628,11 @@ function initApp() {
   document.getElementById('btn-confirm-recurring').addEventListener('click', handleAddRecurring);
   document.getElementById('btn-cancel-recurring').addEventListener('click', hideRecurringConfig);
 
+  // One-time config
+  document.getElementById('btn-cancel-onetime').addEventListener('click', () => {
+    hideOneTimeConfig();
+  });
+
   // Frequency selection
   document.querySelectorAll('.freq-btn').forEach(btn =>
     btn.addEventListener('click', () => {
@@ -515,14 +642,23 @@ function initApp() {
     })
   );
 
-  // Difficulty selection
-  document.querySelectorAll('.diff-btn').forEach(btn =>
+  // Edit modal
+  document.getElementById('btn-save-edit').addEventListener('click', handleSaveEdit);
+  document.getElementById('btn-cancel-edit').addEventListener('click', closeEditModal);
+  document.getElementById('edit-modal-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeEditModal();
+  });
+  document.querySelectorAll('.edit-freq-btn').forEach(btn =>
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.edit-freq-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      state.selectedDifficulty = parseInt(btn.dataset.diff, 10);
+      state.editFrequency = btn.dataset.freq;
     })
   );
+
+  // Habit name validation
+  document.getElementById('habit-name-input').addEventListener('input', updateHabitButtons);
+  updateHabitButtons();
 
   // Enter key in habit input
   document.getElementById('habit-name-input').addEventListener('keydown', e => {

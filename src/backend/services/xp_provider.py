@@ -1,9 +1,20 @@
 from models.habit import Habit
-from models.level import Level
+
+
+DEFAULT_DIFFICULTY = 3
+
+
+def _resolve_habit_xp(habit: Habit, calculate_xp_fn) -> int:
+    """Use stored xp_reward if available, else calculate."""
+    stored_xp = getattr(habit, "xp_reward", None)
+    if isinstance(stored_xp, (int, float)):
+        return int(stored_xp)
+    return calculate_xp_fn(habit)
+
 
 class StaticXpProvider:
-    def __init__(self, level: Level):
-        self.level = level
+    def calculate_difficulty(self, habit: Habit) -> int:
+        return DEFAULT_DIFFICULTY
 
     def calculate_xp(self, habit: Habit) -> int:
         base_xp = habit.difficulty * 10
@@ -11,44 +22,48 @@ class StaticXpProvider:
             "once": 1.0,
             "daily": 1.0,
             "weekly": 1.5,
-            "monthly": 2.0
+            "monthly": 2.0,
         }.get(habit.frequency, 1.0)
-        
+
         return int(base_xp * frequency_multiplier)
 
-    def _resolve_habit_xp(self, habit: Habit) -> int:
-        stored_xp = getattr(habit, "xp_reward", None)
-        if isinstance(stored_xp, (int, float)):
-            return int(stored_xp)
-        return self.calculate_xp(habit)
+    def evaluate_habit(self, habit: Habit) -> dict:
+        difficulty = self.calculate_difficulty(habit)
+        habit.difficulty = difficulty
+        xp = self.calculate_xp(habit)
+        return {"difficulty": difficulty, "xp": xp, "reasoning": "Static defaults"}
 
-    def grant_xp(self, habit: Habit):
-        xp = self._resolve_habit_xp(habit)
-        self.level.add_xp(xp)
+    def resolve_xp(self, habit: Habit) -> int:
+        return _resolve_habit_xp(habit, self.calculate_xp)
 
-    def revoke_xp(self, habit: Habit):
-        xp = self._resolve_habit_xp(habit)
-        self.level.remove_xp(xp)
 
 class DynamicXpProvider:
-    def __init__(self, level: Level):
-        self.level = level
+    def __init__(self, ai_client, static_fallback: StaticXpProvider):
+        self.ai_client = ai_client
+        self.static_fallback = static_fallback
+
+    def evaluate_habit(self, habit: Habit) -> dict:
+        result = self.ai_client.evaluate_habit(
+            name=habit.name,
+            description=getattr(habit, "description", ""),
+            frequency=habit.frequency,
+        )
+        if result is not None:
+            return result
+        return self.static_fallback.evaluate_habit(habit)
 
     def calculate_xp(self, habit: Habit) -> int:
-        # Placeholder for dynamic XP calculation logic
-        # This could involve calling an AI service to evaluate the habit's attributes and history
-        return 0  # Return a default value for now
+        static_xp = self.static_fallback.calculate_xp(habit)
+        result = self.ai_client.evaluate_habit_xp(
+            name=habit.name,
+            description=getattr(habit, "description", ""),
+            frequency=habit.frequency,
+            difficulty=habit.difficulty,
+            static_xp=static_xp,
+        )
+        if result is not None:
+            return result
+        return static_xp
 
-    def _resolve_habit_xp(self, habit: Habit) -> int:
-        stored_xp = getattr(habit, "xp_reward", None)
-        if isinstance(stored_xp, (int, float)):
-            return int(stored_xp)
-        return self.calculate_xp(habit)
-    
-    def grant_xp(self, habit: Habit):
-        xp = self._resolve_habit_xp(habit)
-        self.level.add_xp(xp)
-
-    def revoke_xp(self, habit: Habit):
-        xp = self._resolve_habit_xp(habit)
-        self.level.remove_xp(xp)
+    def resolve_xp(self, habit: Habit) -> int:
+        return _resolve_habit_xp(habit, self.calculate_xp)
